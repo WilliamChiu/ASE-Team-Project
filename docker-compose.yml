@@ -1,7 +1,27 @@
-version: "3.8"
-   
+version: "3"
 services:
+  frontend:
+    container_name: wcj-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: wcj/frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/usr/src/app
+  backend:
+    container_name: wcj-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: wcj/backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/usr/src/app
   mongo:
+    container_name: wcj-mongo
     image: mongo:latest
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -9,13 +29,21 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - ./mongo-volume:/data/db
-  web:
-    build: backend
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./backend:/code
+      - ./mongodb_data:/data/db
+  mongoex:
+    container_name: wcj-mongo-express
+    image: mongo-express
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+      - ME_CONFIG_MONGODB_AUTH_USERNAME=root
+      - ME_CONFIG_MONGODB_AUTH_PASSWORD=rootpassword
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=rootpassword
     ports:
-      - "8000:8000"
-    depends_on:
+      - "8081:8081"
+    links:
       - mongo
