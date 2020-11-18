@@ -1,0 +1,41 @@
+.Content {
+    background-color: rgb(255, 255, 255);
+    height: 100vh;
+}
+
+  
+.Intro-Text {
+    padding-top: 5em;
+    color: black;
+    font-family: Avenir;
+    font-size: 50px;
+    text-align: center;
+    font-weight: 600;
+    cursor: default;
+    padding-bottom: 70px;
+}
+
+.Login-Button {
+    text-align: center;
+    position: relative;
+}
+
+a {
+    text-decoration: none;
+}
+
+#auth-button {
+    padding: 15px 40px;
+    background: #4285F4;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 40px;
+    font-size: 20px;
+    font-family: Avenir;
+    outline: none;
+}
+
+#auth-button:hover {
+    background-color: rgb(60, 110, 190);
+}
