@@ -5,6 +5,7 @@ const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
 const GOOGLE_CLIENT_ID = '900015218011-8vr250fck2dkr7flrcuiljcc1dvh9lvr.apps.googleusercontent.com'
 const GOOGLE_CLIENT_SECRET = 'Wqa3ySu87dLvu_nr5V-9D7IV'
+const cors = require('cors')
 // TODO
 // Require MongoClient and implement database logic
 
@@ -29,7 +30,7 @@ passport.use(new GoogleStrategy({
     return done(null, userProfile)
   }
 ))
-
+app.use(cors())     
 app.use(passport.initialize())
 app.use(passport.session())
  
@@ -40,7 +41,7 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/error' }),
   function(req, res) {
     // Successful authentication, redirect success.
-    res.redirect('/success')
+    res.redirect('http://localhost:3000')
   })
 
 app.get('/success', (req, res) => res.send(userProfile))
