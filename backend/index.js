@@ -1,11 +1,17 @@
 const express = require('express')
 const app = express()
+const server = require('http').createServer(app);
+const io = require('socket.io')(server, {});
 const session = require('express-session')
 const passport = require('passport')
+const rooms = require('./data/rooms.json')
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
 const GOOGLE_CLIENT_ID = '900015218011-8vr250fck2dkr7flrcuiljcc1dvh9lvr.apps.googleusercontent.com'
 const GOOGLE_CLIENT_SECRET = 'Wqa3ySu87dLvu_nr5V-9D7IV'
 const cors = require('cors')
+const MongoClient = require('mongodb').MongoClient;
+const url = 'mongodb://root:rootpassword@mongo:27017';
+const dbName = 'roaree';
 // TODO
 // Require MongoClient and implement database logic
 
@@ -47,6 +53,18 @@ app.get('/auth/google/callback',
 app.get('/success', (req, res) => res.send(userProfile))
 app.get('/error', (req, res) => res.send("error logging in"))
 
+app.get('/initDatabase', (req, res) => {
+  MongoClient.connect(url, function(err, client) {
+    const db = client.db(dbName)
+    const roomsCol = db.collection('rooms')
+    roomsCol.insertMany(rooms, (err, result) => {
+      console.log(err, result)
+      client.close();
+      res.send("Initializing database")
+    })
+  });
+})
+
 // TODO
 // Find out how to auth protect our endpoints ("/api/room/join", "/api/room/send") with Passport middleware
 
@@ -86,5 +104,22 @@ app.use(session({
   secret: 'SECRET' 
 }))
 
-const port = process.env.PORT || 5000
-app.listen(port , () => console.log('App listening on port ' + port))
+
+// https://socket.io/docs/v3/namespaces/index.html
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+
+io.use(wrap(session({ secret: 'cats' })));
+io.use(wrap(passport.initialize()));
+io.use(wrap(passport.session()));
+
+io.use((socket, next) => {
+  if (socket.request.user) {
+    next();
+  } else {
+    next(new Error('unauthorized'))
+  }
+});
+
+io.on('connection', socket => { console.log(socket) });
+
+server.listen(5000);
