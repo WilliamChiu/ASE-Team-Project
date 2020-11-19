@@ -1,13 +1,14 @@
 const express = require('express')
-const session = require('cookie-session');
+const session = require('express-session')
 const app = express()
-const server = require('http').createServer(app);
+const server = require('http').createServer(app)
 const io = require('socket.io')(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
-});
+})
 // const session = require('express-session')
 const passport = require('passport')
 const rooms = require('./data/rooms.json')
@@ -15,9 +16,9 @@ const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
 const GOOGLE_CLIENT_ID = '900015218011-8vr250fck2dkr7flrcuiljcc1dvh9lvr.apps.googleusercontent.com'
 const GOOGLE_CLIENT_SECRET = 'Wqa3ySu87dLvu_nr5V-9D7IV'
 const cors = require('cors')
-const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://root:rootpassword@mongo:27017';
-const dbName = 'roaree';
+const MongoClient = require('mongodb').MongoClient
+const url = 'mongodb://root:rootpassword@mongo:27017'
+const dbName = 'roaree'
 // TODO
 // Require MongoClient and implement database logic
 
@@ -48,11 +49,9 @@ passport.use(new GoogleStrategy({
   }
 ))
 
-app.use(cors({origin: "http://localhost:3000", credentials:true}))
-app.use(session({
-  name: 'session-name',
-  keys: ['key1', 'key2']
-}))
+app.use(cors({origin: "http://localhost:3000", credentials: true}))
+const sessionMiddleware = session({ secret: 'keyboard cat', resave: false, saveUninitialized: true })
+app.use(sessionMiddleware)
 app.use(passport.initialize())
 app.use(passport.session())
 
@@ -67,7 +66,7 @@ app.get('/auth/google/callback',
   })
 
 app.get('/success', (req, res) => {
-  console.log(req.user)
+  // console.log(req.user)
   res.send(req.user)
 })
 app.get('/error', (req, res) => res.send("error logging in"))
@@ -78,10 +77,10 @@ app.get('/initDatabase', (req, res) => {
     const roomsCol = db.collection('rooms')
     roomsCol.insertMany(rooms, (err, result) => {
       console.log(err, result)
-      client.close();
+      client.close()
       res.send("Initializing database")
     })
-  });
+  })
 })
 
 // TODO
@@ -110,25 +109,25 @@ app.post("/api/room/send", (req, res) => {
 
 
 // https://socket.io/docs/v3/namespaces/index.html
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next)
 
-io.use(wrap(session({ secret: 'cats' })));
-io.use(wrap(passport.initialize()));
-io.use(wrap(passport.session()));
+io.use(wrap(sessionMiddleware))
+io.use(wrap(passport.initialize()))
+io.use(wrap(passport.session()))
 
 io.use((socket, next) => {
-  // console.log(socket.request)
+  console.log(socket.request.user)
   if (socket.request.user) {
-    next();
+    next()
   } else {
     next(new Error('unauthorized'))
   }
-});
+})
 
 io.on('connection', socket => {
   // console.log(socket)
   console.log("test")
-  io.send('hi');
-});
+  io.send('hi')
+})
 
-server.listen(5000);
+server.listen(5000)

@@ -3,7 +3,9 @@ import io from 'socket.io-client';
 import './Landing.css'
 
 function Landing(props) {
-    const socket = io('ws://localhost:5000');
+    const socket = io('ws://localhost:5000', {
+        withCredentials: true
+    });
     socket.on('message', data => {
         console.log(data);
     });
