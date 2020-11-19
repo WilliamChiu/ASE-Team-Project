@@ -5,7 +5,7 @@ import particlesConfig from '../config/particlesConfig';
 
 function Login (props) {
     useEffect(() => {
-        fetch('http://localhost:5000/success')
+        fetch('http://localhost:5000/success', {credentials: 'include'})
         .then(res => res.json())
         .then(data => {
             if (data) {
