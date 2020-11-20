@@ -30,7 +30,7 @@ passport.use(new GoogleStrategy({
     return done(null, userProfile)
   }
 ))
-app.use(cors())     
+app.use(cors())        
 app.use(passport.initialize())
 app.use(passport.session())
  
