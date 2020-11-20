@@ -163,17 +163,19 @@ io.use((socket, next) => {
   }
 })
 
-io.on('connection', socket => {
+io.on('connection', async socket => {
   let email = socket.request.user?._json?.email
-  MongoClient.connect(url, function (err, client) {
+  await new Promise((res, rej) => MongoClient.connect(url, function (err, client) {
     // console.log(client)
     const db = client.db(dbName)
     const usersCol = db.collection('users')
     usersCol.findOne({ email }, (err, result) => {
       let from = result.location
+      console.log("Joining " + from)
       socket.join(from)
+      res()
     })
-  })
+  }))
   roomChanges.on('event', (_email, from, to) => {
     if (_email === email) {
       console.log("Updating location for " + email)
@@ -183,7 +185,9 @@ io.on('connection', socket => {
   });
 
   socket.on('chat', message => {
-    console.log(message)
+    socket.rooms.forEach(room => {
+      socket.to(room).emit(message)
+    })
   })
   // io.send('hi')
 })
