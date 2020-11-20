@@ -1,7 +1,9 @@
 const express = require('express')
 const session = require('express-session')
 const app = express()
+const EventEmitter = require('events');
 const server = require('http').createServer(app)
+const bodyParser = require('body-parser')
 const io = require('socket.io')(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -19,6 +21,12 @@ const cors = require('cors')
 const MongoClient = require('mongodb').MongoClient
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
+
+class RoomEmitter extends EventEmitter {}
+
+const roomChanges = new RoomEmitter();
+
+
 // TODO
 // Require MongoClient and implement database logic
 
@@ -43,13 +51,28 @@ passport.use(new GoogleStrategy({
     // the database if it does not exist yet
     // This is the callback from Google, so this is where we check if
     // a user has an account, and if not, we create one from them
+    let email = profile?._json?.email
+    if (!email) 
+      done(null, false, { message: "Not a Columbia/Barnard email" })
     if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
       done(null, false, { message: "Not a Columbia/Barnard email" })
+    MongoClient.connect(url, function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.findOne({ email }, (err, result) => {
+        if (!result) {
+          usersCol.insertOne({ email, location: "butler" }, (err, result) => {
+            if (err) console.log(err)
+          })
+        }
+      })
+    })
     return done(null, profile)
   }
 ))
 
-app.use(cors({origin: "http://localhost:3000", credentials: true}))
+app.use(bodyParser.json())
+app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 const sessionMiddleware = session({ secret: 'keyboard cat', resave: false, saveUninitialized: true })
 app.use(sessionMiddleware)
 app.use(passport.initialize())
@@ -92,7 +115,32 @@ app.get('/initDatabase', (req, res) => {
 // Get their account identifier (whatever that may be, an email, accountId field, idk)
 // If valid, update their entry in database to reflect they are in a new room
 app.post("/api/room/join", (req, res) => {
-
+  // let email = req?.user?._json?.email
+  // if (!email){
+  //   res.send("get out")
+  // }
+  let email = "wnc2105@columbia.edu"
+  MongoClient.connect(url, function (err, client) {
+    // console.log(client)
+    const db = client.db(dbName)
+    const usersCol = db.collection('users')
+    usersCol.findOne({ email }, (err, result) => {
+      if (!result) {
+        client.close()
+        res.send("getout")
+      }
+      else {
+        let from = result.location
+        let to = req.body.room
+        usersCol.updateOne({ email }, {$set: { location: to }}, (err, result) => {
+          // console.log(err, result)
+          client.close()
+          roomChanges.emit('event', email, from, to)
+          res.send("user updated")
+        })
+      }
+    })
+  })
 })
 
 // TODO
@@ -107,7 +155,7 @@ io.use(wrap(passport.initialize()))
 io.use(wrap(passport.session()))
 
 io.use((socket, next) => {
-  console.log(socket.request.user)
+  // console.log("Socket user found: ", socket.request.user)
   if (socket.request.user) {
     next()
   } else {
@@ -116,9 +164,28 @@ io.use((socket, next) => {
 })
 
 io.on('connection', socket => {
-  // console.log(socket)
-  console.log("test")
-  io.send('hi')
+  let email = socket.request.user?._json?.email
+  MongoClient.connect(url, function (err, client) {
+    // console.log(client)
+    const db = client.db(dbName)
+    const usersCol = db.collection('users')
+    usersCol.findOne({ email }, (err, result) => {
+      let from = result.location
+      socket.join(from)
+    })
+  })
+  roomChanges.on('event', (_email, from, to) => {
+    if (_email === email) {
+      console.log("Updating location for " + email)
+      socket.leave(from)
+      socket.join(to)
+    }
+  });
+
+  socket.on('chat', message => {
+    console.log(message)
+  })
+  // io.send('hi')
 })
 
 server.listen(5000)

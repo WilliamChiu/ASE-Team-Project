@@ -6,8 +6,9 @@ function Landing(props) {
     const socket = io('ws://localhost:5000', {
         withCredentials: true
     });
-    socket.on('message', data => {
-        console.log(data);
+    socket.on('connect', () => {
+        console.log("testing")
+        socket.emit('chat', "testing 123")
     });
     return (
         <div className="Landing">
