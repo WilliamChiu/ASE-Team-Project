@@ -13,11 +13,11 @@ const io = require('socket.io')(server, {
 const passport = require('passport')
 const rooms = require('./data/rooms.json')
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
-const GOOGLE_CLIENT_ID = '900015218011-8vr250fck2dkr7flrcuiljcc1dvh9lvr.apps.googleusercontent.com'
-const GOOGLE_CLIENT_SECRET = 'Wqa3ySu87dLvu_nr5V-9D7IV'
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
 const cors = require('cors')
 const MongoClient = require('mongodb').MongoClient
-const url = 'mongodb://root:rootpassword@mongo:27017'
+const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
 // TODO
 // Require MongoClient and implement database logic
@@ -92,15 +92,6 @@ app.get('/initDatabase', (req, res) => {
 // Get their account identifier (whatever that may be, an email, accountId field, idk)
 // If valid, update their entry in database to reflect they are in a new room
 app.post("/api/room/join", (req, res) => {
-
-})
-
-// TODO
-// Use bodyparser https://www.npmjs.com/package/body-parser
-// Get the roomId parameter from the POST request
-// Get their account identifier (whatever that may be, an email, accountId field, idk)
-// If valid, do nothing for now, since there is no websocket architecture
-app.post("/api/room/send", (req, res) => {
 
 })
 
