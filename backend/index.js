@@ -47,10 +47,6 @@ function loggedIn(email) {
   return Lions?.[email]?.socket.connected ? true : false
 }
 
-class RoomEmitter extends EventEmitter { }
-
-const roomChanges = new RoomEmitter();
-
 passport.serializeUser(function (user, cb) {
   cb(null, user)
 })
@@ -125,35 +121,6 @@ app.get('/initDatabase', (req, res) => {
   })
 })
 
-app.post("/api/room/join", (req, res) => {
-  let email = req?.user?._json?.email
-  console.log("GETTING JOIN REQUEST", req.body)
-  if (!email) {
-    res.send("get out")
-  }
-  MongoClient.connect(url, function (err, client) {
-    // console.log(client)
-    const db = client.db(dbName)
-    const usersCol = db.collection('users')
-    usersCol.findOne({ email }, (err, result) => {
-      if (!result) {
-        client.close()
-        res.send("getout")
-      }
-      else {
-        let from = result.location
-        let to = req.body.room
-        usersCol.updateOne({ email }, { $set: { location: to } }, (err, result) => {
-          // console.log(err, result)
-          client.close()
-          roomChanges.emit('event', email, from, to)
-          res.send("user updated")
-        })
-      }
-    })
-  })
-})
-
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages
 
@@ -201,28 +168,41 @@ io.on('connection', async socket => {
       console.log(Rooms)
       Rooms[from].add(email)
       io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-        let {location} = Lions[email]
-        return {email, location}
+        let { location } = Lions[email]
+        return { email, location }
       }))
       client.close()
       res()
     })
   }))
 
-  roomChanges.on('event', async (_email, from, to) => {
-    if (_email === email) {
-      console.log("Updating location for " + email, from, to)
-      socket.leave(from)
-      Rooms[from].delete(email)
-      socket.join(to)
-      Rooms[to].add(email)
-      Lions[email].room = to
-      io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-        let { location } = Lions[email]
-        return { email, location }
-      }))
-    }
-  });
+  socket.on('changeRoom', room => {
+    MongoClient.connect(url, function (err, client) {
+      // console.log(client)
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.updateOne({ email }, { $set: { location: room } }, async (err, result) => {
+        // console.log(err, result)
+        client.close()
+        let from = Lions[email].room
+        let to = room
+        console.log("Updating location for " + email, from, to)
+        socket.leave(from)
+        Rooms[from].delete(email)
+        socket.join(to)
+        Rooms[to].add(email)
+        Lions[email].room = to
+        io.to(from).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+        io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+      })
+    })
+  })
 
   socket.on('chat', message => {
     let room = Lions[email].room

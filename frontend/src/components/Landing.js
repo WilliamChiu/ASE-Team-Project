@@ -28,17 +28,6 @@ function Landing(props) {
             console.log(participants)
             setParticipants(participants)
         })
-        changeRoom = async room => {
-            await fetch('http://localhost:5000/api/room/join', {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ room })
-            })
-        }
         return () => {
             socket.off('chat')
             socket.off('room')
@@ -53,6 +42,9 @@ function Landing(props) {
         if (message.substring(0, 5) === "/move") socket.emit('move', message.substring(6))
         socket.emit('chat', message)
         setMessage('')
+    }
+    const changeRoom = room => {
+        socket.emit('changeRoom', room)
     }
 
     console.log(participants.length)
