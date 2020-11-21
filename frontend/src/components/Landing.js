@@ -3,7 +3,6 @@ import io from 'socket.io-client';
 import './Landing.css'
 
 let socket;
-let changeRoom;
 
 function Landing(props) {
     const [room, setRoom] = useState({})
@@ -20,6 +19,8 @@ function Landing(props) {
         })
     }, [])
     useEffect(() => {
+        console.log('background', room.background)
+        document.getElementById('room').style.backgroundImage = `url(${room.background})`
         socket.on('chat', message => {
             appendChat(message)
         })
@@ -50,24 +51,35 @@ function Landing(props) {
     console.log(participants.length)
 
     return (
-        <div className="Landing">
-            Welcome {props.displayName} <br />
-            <img src={props.photos[0].value} />
-            <div>Room: {room?.room}</div>
-            {
-                room?.exits?.map(exit => <p onClick={() => changeRoom(exit.room)}>{exit.room}</p>)
-            }
-            {
-                participants.map(p => <p>{p.email} {p.location}</p>)
-            }
-            <div>
+        <div className="Landing" id="room">
+            <div style={{textAlign: "center", fontWeight: "800", fontSize: "30px"}}>Room: {room?.room}</div>
+            <div className="userInfo" style={{float: "right"}}>
+                <span style={{paddingRight: "10px"}}>Welcome {props.displayName}</span>
+                <img src={props.photos[0].value} alt="User" style={{width: "50px", borderRadius: "50%"}} />
+            </div>
+            <div className="navigation">
+                <b>Go to:</b>
                 {
-                    chat.map(message => <p>{message}</p>)
+                    room?.exits?.map(exit => <p onClick={() => changeRoom(exit.room)}>{exit.room}</p>)
                 }
             </div>
-            <form onSubmit={sendMessage}>
-                <input type="text" value={message} onChange={handleMessage} />
-            </form>
+            <div className="participants">
+            <b>Participants:</b>
+                {
+                    participants.map(p => <p>{p.email} @ {p.location}</p>)
+                }
+            </div>
+            <div className="chat">
+                <b>Chat:</b>
+                <div>
+                    {
+                        chat.map(message => <p>{message}</p>)
+                    }
+                </div>
+                <form onSubmit={sendMessage}>
+                    <input type="text" value={message} onChange={handleMessage} />
+                </form>
+            </div>
         </div>
     )
 }
