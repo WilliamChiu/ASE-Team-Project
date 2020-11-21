@@ -22,13 +22,34 @@ const MongoClient = require('mongodb').MongoClient
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
 
-class RoomEmitter extends EventEmitter {}
+const Lions = {}
+const Rooms = {}
+
+// Initialize Rooms
+MongoClient.connect(url, async (err, client) => {
+  const db = client.db(dbName)
+  const roomsCol = db.collection('rooms')
+  let rooms = await roomsCol.find().toArray()
+  rooms.map(({ room }) => {
+    Rooms[room] = new Set()
+  })
+})
+
+class Lion {
+  constructor(socket, room, location) {
+    this.socket = socket
+    this.room = room
+    this.location = location
+  }
+}
+
+function loggedIn(email) {
+  return Lions?.[email]?.socket.connected ? true : false
+}
+
+class RoomEmitter extends EventEmitter { }
 
 const roomChanges = new RoomEmitter();
-
-
-// TODO
-// Require MongoClient and implement database logic
 
 passport.serializeUser(function (user, cb) {
   cb(null, user)
@@ -44,18 +65,14 @@ passport.use(new GoogleStrategy({
   callbackURL: "http://localhost:5000/auth/google/callback"
 },
   function (accessToken, refreshToken, profile, done) {
-    // TODO
-    // We do not need to worry about storing sessions on database
-    // Express handles sessions for us with cookies or some shit
-    // When people login though we need to create an account for them on
-    // the database if it does not exist yet
-    // This is the callback from Google, so this is where we check if
-    // a user has an account, and if not, we create one from them
     let email = profile?._json?.email
-    if (!email) 
-      done(null, false, { message: "Not a Columbia/Barnard email" })
-    if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
-      done(null, false, { message: "Not a Columbia/Barnard email" })
+    // if (!email)
+    //   done(null, false, { message: "Not a Columbia/Barnard email" })
+    // else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
+    //   done(null, false, { message: "Not a Columbia/Barnard email" })
+    // else if (loggedIn(email))
+    //   done(null, false, { message: "Already logged in" })
+    // else {
     MongoClient.connect(url, function (err, client) {
       const db = client.db(dbName)
       const usersCol = db.collection('users')
@@ -68,6 +85,7 @@ passport.use(new GoogleStrategy({
       })
     })
     return done(null, profile)
+    // }
   }
 ))
 
@@ -98,6 +116,7 @@ app.get('/initDatabase', (req, res) => {
   MongoClient.connect(url, function (err, client) {
     const db = client.db(dbName)
     const roomsCol = db.collection('rooms')
+    roomsCol.createIndex({ room: 1 }, { unique: true })
     roomsCol.insertMany(rooms, (err, result) => {
       console.log(err, result)
       client.close()
@@ -106,20 +125,12 @@ app.get('/initDatabase', (req, res) => {
   })
 })
 
-// TODO
-// Find out how to auth protect our endpoints ("/api/room/join", "/api/room/send") with Passport middleware
-
-// TODO
-// Use bodyparser https://www.npmjs.com/package/body-parser
-// Get the roomId parameter from the POST request
-// Get their account identifier (whatever that may be, an email, accountId field, idk)
-// If valid, update their entry in database to reflect they are in a new room
 app.post("/api/room/join", (req, res) => {
-  // let email = req?.user?._json?.email
-  // if (!email){
-  //   res.send("get out")
-  // }
-  let email = "wnc2105@columbia.edu"
+  let email = req?.user?._json?.email
+  console.log("GETTING JOIN REQUEST", req.body)
+  if (!email ) {
+    res.send("get out")
+  }
   MongoClient.connect(url, function (err, client) {
     // console.log(client)
     const db = client.db(dbName)
@@ -132,7 +143,7 @@ app.post("/api/room/join", (req, res) => {
       else {
         let from = result.location
         let to = req.body.room
-        usersCol.updateOne({ email }, {$set: { location: to }}, (err, result) => {
+        usersCol.updateOne({ email }, { $set: { location: to } }, (err, result) => {
           // console.log(err, result)
           client.close()
           roomChanges.emit('event', email, from, to)
@@ -163,31 +174,90 @@ io.use((socket, next) => {
   }
 })
 
+const getRoomData = async room => {
+  return new Promise((res, rej) => MongoClient.connect(url, function (err, client) {
+    const db = client.db(dbName)
+    const roomsCol = db.collection('rooms')
+    roomsCol.findOne({ room }, (err, result) => {
+      let {_id, ...data} = result
+      res(data)
+    })
+  }))
+}
+
+
 io.on('connection', async socket => {
   let email = socket.request.user?._json?.email
+  if (loggedIn(email)) socket.disconnect(true)
   await new Promise((res, rej) => MongoClient.connect(url, function (err, client) {
-    // console.log(client)
     const db = client.db(dbName)
     const usersCol = db.collection('users')
-    usersCol.findOne({ email }, (err, result) => {
+    usersCol.findOne({ email }, async (err, result) => {
       let from = result.location
       console.log("Joining " + from)
       socket.join(from)
+      Lions[email] = new Lion(socket, from, [50, 50])
+      console.log(Rooms)
+      Rooms[from].add(email)
+      io.to(from).emit('room', await getRoomData(from), JSON.stringify([...Rooms[from]]))
       res()
     })
   }))
-  roomChanges.on('event', (_email, from, to) => {
+
+  roomChanges.on('event', async (_email, from, to) => {
     if (_email === email) {
-      console.log("Updating location for " + email)
+      console.log("Updating location for " + email, from, to)
       socket.leave(from)
+      Rooms[from].delete(email)
       socket.join(to)
+      Rooms[to].add(email)
+      Lions[email].room = to
+      io.to(to).emit('room', await getRoomData(to), JSON.stringify([...Rooms[to]]))
     }
   });
 
   socket.on('chat', message => {
-    socket.rooms.forEach(room => {
-      socket.to(room).emit(message)
-    })
+    let room = Lions[email].room
+    console.log(room, message)
+    io.to(room).emit('chat', `${email}: ${message}`)
+  })
+
+  socket.on('move', async location => {
+    console.log("Moving", email, location)
+    if (!Lions[email]) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    Lions[email].location = location
+    let room = Lions?.[email]?.room
+    if (!room) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    // TODO: Use farmhash to ensure consistency w/ client
+    socket.to(room).emit('move', email)
+  })
+
+  socket.on('room', async () => {
+    let room = Lions?.[email]?.room
+    if (!room) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    socket.emit('room', await getRoomData(room), JSON.stringify([...Rooms[room]]))
+  })
+
+  socket.on('disconnect', () => {
+    console.log(`${email} disconnected`)
+    if (Lions[email]) {
+      Rooms[Lions[email].room].delete(email)
+      delete Lions.email
+    }
+    else {
+      for (let room of Rooms) {
+        if (room.has(email)) room.delete(email)
+      }
+    }
   })
   // io.send('hi')
 })
