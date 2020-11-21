@@ -128,7 +128,7 @@ app.get('/initDatabase', (req, res) => {
 app.post("/api/room/join", (req, res) => {
   let email = req?.user?._json?.email
   console.log("GETTING JOIN REQUEST", req.body)
-  if (!email ) {
+  if (!email) {
     res.send("get out")
   }
   MongoClient.connect(url, function (err, client) {
@@ -179,7 +179,8 @@ const getRoomData = async room => {
     const db = client.db(dbName)
     const roomsCol = db.collection('rooms')
     roomsCol.findOne({ room }, (err, result) => {
-      let {_id, ...data} = result
+      let { _id, ...data } = result
+      client.close()
       res(data)
     })
   }))
@@ -199,7 +200,11 @@ io.on('connection', async socket => {
       Lions[email] = new Lion(socket, from, [50, 50])
       console.log(Rooms)
       Rooms[from].add(email)
-      io.to(from).emit('room', await getRoomData(from), JSON.stringify([...Rooms[from]]))
+      io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+        let {location} = Lions[email]
+        return {email, location}
+      }))
+      client.close()
       res()
     })
   }))
@@ -212,7 +217,10 @@ io.on('connection', async socket => {
       socket.join(to)
       Rooms[to].add(email)
       Lions[email].room = to
-      io.to(to).emit('room', await getRoomData(to), JSON.stringify([...Rooms[to]]))
+      io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+        let { location } = Lions[email]
+        return { email, location }
+      }))
     }
   });
 
@@ -235,7 +243,10 @@ io.on('connection', async socket => {
       return
     }
     // TODO: Use farmhash to ensure consistency w/ client
-    socket.to(room).emit('move', email)
+    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+      let { location } = Lions[email]
+      return { email, location }
+    }))
   })
 
   socket.on('room', async () => {
@@ -244,7 +255,10 @@ io.on('connection', async socket => {
       socket.emit('error', "Please reconnect")
       return
     }
-    socket.emit('room', await getRoomData(room), JSON.stringify([...Rooms[room]]))
+    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+      let { location } = Lions[email]
+      return { email, location }
+    }))
   })
 
   socket.on('disconnect', () => {

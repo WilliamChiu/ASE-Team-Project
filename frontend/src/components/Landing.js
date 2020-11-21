@@ -7,6 +7,7 @@ let changeRoom;
 
 function Landing(props) {
     const [room, setRoom] = useState({})
+    const [participants, setParticipants] = useState([])
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
     const appendChat = message => {
@@ -24,6 +25,8 @@ function Landing(props) {
         })
         socket.on('room', (data, participants) => {
             setRoom(data)
+            console.log(participants)
+            setParticipants(participants)
         })
         changeRoom = async room => {
             await fetch('http://localhost:5000/api/room/join', {
@@ -40,16 +43,19 @@ function Landing(props) {
             socket.off('chat')
             socket.off('room')
         }
-    }, [chat, room])
+    }, [chat, room, participants])
 
     const handleMessage = e => {
         setMessage(e.target.value)
     }
     const sendMessage = e => {
         e.preventDefault()
+        if (message.substring(0, 5) === "/move") socket.emit('move', message.substring(6))
         socket.emit('chat', message)
         setMessage('')
     }
+
+    console.log(participants.length)
 
     return (
         <div className="Landing">
@@ -58,6 +64,9 @@ function Landing(props) {
             <div>Room: {room?.room}</div>
             {
                 room?.exits?.map(exit => <p onClick={() => changeRoom(exit.room)}>{exit.room}</p>)
+            }
+            {
+                participants.map(p => <p>{p.email} {p.location}</p>)
             }
             <div>
                 {
