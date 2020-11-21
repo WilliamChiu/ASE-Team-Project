@@ -242,8 +242,7 @@ io.on('connection', async socket => {
       socket.emit('error', "Please reconnect")
       return
     }
-    // TODO: Use farmhash to ensure consistency w/ client
-    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+    io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
     }))
