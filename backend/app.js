@@ -195,7 +195,7 @@ io.on('connection', async socket => {
         socket.join(to)
         Rooms[to].add(email)
         Lions[email].room = to
-        io.to(from).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+        io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
           let { location } = Lions[email]
           return { email, location }
         }))
