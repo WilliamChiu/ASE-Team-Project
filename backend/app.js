@@ -76,7 +76,7 @@ passport.use(new GoogleStrategy({
       const usersCol = db.collection('users')
       usersCol.findOne({ email }, (err, result) => {
         if (!result) {
-          usersCol.insertOne({ email, location: "butler" }, (err, result) => {
+          usersCol.insertOne({ email, location: "butler" }, err => {
             if (err) console.log(err)
           })
         }
@@ -145,11 +145,11 @@ io.use((socket, next) => {
 })
 
 const getRoomData = async room => {
-  return new Promise((res, rej) => MongoClient.connect(url, function (err, client) {
+  return new Promise(res => MongoClient.connect(url, function (err, client) {
     const db = client.db(dbName)
     const roomsCol = db.collection('rooms')
     roomsCol.findOne({ room }, (err, result) => {
-      let { _id, ...data } = result
+      let { _id, ...data } = result // eslint-disable-line no-unused-vars
       client.close()
       res(data)
     })
@@ -160,7 +160,7 @@ const getRoomData = async room => {
 io.on('connection', async socket => {
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
-  await new Promise((res, rej) => MongoClient.connect(url, function (err, client) {
+  await new Promise(res => MongoClient.connect(url, function (err, client) {
     const db = client.db(dbName)
     const usersCol = db.collection('users')
     usersCol.findOne({ email }, async (err, result) => {
@@ -184,7 +184,7 @@ io.on('connection', async socket => {
       // console.log(client)
       const db = client.db(dbName)
       const usersCol = db.collection('users')
-      usersCol.updateOne({ email }, { $set: { location: room } }, async (err, result) => {
+      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
         // console.log(err, result)
         client.close()
         let from = Lions[email].room
