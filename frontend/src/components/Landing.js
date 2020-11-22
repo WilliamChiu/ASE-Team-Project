@@ -9,16 +9,17 @@ function Landing(props) {
     const [participants, setParticipants] = useState([])
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
-    const appendChat = message => {
-        let newChat = [...chat, message]
-        setChat(newChat)
-    }
+
     useEffect(() => {
         socket = io('ws://localhost:5000', {
             withCredentials: true
         })
     }, [])
     useEffect(() => {
+        const appendChat = message => {
+            let newChat = [...chat, message]
+            setChat(newChat)
+        }
         console.log('background', room.background)
         document.getElementById('room').style.backgroundImage = `url(${room.background})`
         socket.on('chat', message => {

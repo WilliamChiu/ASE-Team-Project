@@ -1,0 +1,4 @@
+
+> wcj-backend@1.0.0 lint /usr/src/app
+> eslint app.js
+
