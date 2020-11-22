@@ -180,31 +180,33 @@ io.on('connection', async socket => {
   }))
 
   socket.on('changeRoom', room => {
-    MongoClient.connect(url, function (err, client) {
-      // console.log(client)
-      const db = client.db(dbName)
-      const usersCol = db.collection('users')
-      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
-        // console.log(err, result)
-        client.close()
-        let from = Lions[email].room
-        let to = room
-        console.log("Updating location for " + email, from, to)
-        socket.leave(from)
-        Rooms[from].delete(email)
-        socket.join(to)
-        Rooms[to].add(email)
-        Lions[email].room = to
-        io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
-        io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
+    if (Rooms[room]) {
+      MongoClient.connect(url, function (err, client) {
+        // console.log(client)
+        const db = client.db(dbName)
+        const usersCol = db.collection('users')
+        usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
+          // console.log(err, result)
+          client.close()
+          let from = Lions[email].room
+          let to = room
+          console.log("Updating location for " + email, from, to)
+          socket.leave(from)
+          Rooms[from].delete(email)
+          socket.join(to)
+          Rooms[to].add(email)
+          Lions[email].room = to
+          io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+            let { location } = Lions[email]
+            return { email, location }
+          }))
+          io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+            let { location } = Lions[email]
+            return { email, location }
+          }))
+        })
       })
-    })
+    }
   })
 
   socket.on('chat', message => {
