@@ -1,6 +1,7 @@
 // more on how to write tests here: https://www.albertgao.xyz/2017/05/24/how-to-test-expressjs-with-jest-and-supertest/
 const request = require("supertest");
 const app, { getRoomData } = require('./app')
+const WebSocket = require('ws')
 
 describe("Test the server routes", () => {
   test("check the authentication route (redirect)", async () => {
