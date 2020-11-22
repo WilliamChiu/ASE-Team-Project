@@ -41,7 +41,13 @@ function Landing(props) {
     }
     const sendMessage = e => {
         e.preventDefault()
-        if (message.substring(0, 5) === "/move") socket.emit('move', message.substring(6))
+        if (message.substring(0, 5) === "/move") {
+            try {
+                let moveTo = JSON.parse(message.substring(6))
+                socket.emit('move', moveTo)
+            }
+            catch (e) {}
+        }
         socket.emit('chat', message)
         setMessage('')
     }

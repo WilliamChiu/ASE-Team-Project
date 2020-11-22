@@ -215,7 +215,16 @@ io.on('connection', async socket => {
 
   socket.on('move', async location => {
     console.log("Moving", email, location)
-    if (!Lions[email]) {
+    if (typeof location !== "object") {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    location = location.map(i => parseInt(i))
+    if (location.length !== 2 || location[0] < 0 || location[1] > 100 || location[1] < 0 || location[1] > 100) {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    else if (!Lions[email]) {
       socket.emit('error', "Please reconnect")
       return
     }
