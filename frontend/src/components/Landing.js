@@ -60,23 +60,28 @@ function Landing(props) {
 
     console.log(participants.length)
 
-    const draw = React.useCallback(g => {
-        g.clear();
-        g.beginFill('#a2a2a2');
-        g.drawRect(50, 200, 30, 40); // x, y, width, height
-        g.endFill();
-    }, [])
-
-    const updatePointer = (e) => {
-        console.log(e.screenX)
-        console.log(e.screenY)
-        setX(e.screenX * 0.6)
-        setY(e.screenY * 0.6)
+    const movePointer = (e) => {
+        console.log(e.keyCode)
+        var x = e.keyCode;
+        switch (x) {
+            case 37:
+                setX(curX - 10)
+                break;
+            case 39:
+                setX(curX + 10)
+                break;
+            case 38:
+                setY(curY - 10)
+                break;
+            case 40:
+                setY(curY + 10)
+                break;
+        }
     }
 
     return (
         <div className="Landing" id="room">
-            <Stage onClick={(e) => updatePointer(e)} style={{position: 'absolute', border: '1px solid red', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
+            <Stage tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
                 <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.2 }} anchor={0.5} x={curX} y={curY}/>
                 {/*<Graphics draw={draw}/>*/}
             </Stage>
