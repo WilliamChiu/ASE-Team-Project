@@ -29,13 +29,15 @@ const Rooms = {}
 async function initRooms() {
   let checkMongo = () => {
     return new Promise(res => {
-      MongoClient.connect(url, async (err, client) => {
-        if (err) {
-          return await checkMongo()
-        }
-        client.close()
-        res()
-      })
+      setTimeout(() => {
+        MongoClient.connect(url, async (err, client) => {
+          if (err) {
+            return await checkMongo()
+          }
+          client.close()
+          res()
+        })
+      }, 1000)
     })
   }
   await checkMongo()
@@ -233,8 +235,8 @@ io.on('connection', async socket => {
 
   socket.on('chat', message => {
     let room = Lions[email].room
-    console.log(room, message)
-    io.to(room).emit('chat', `${email}: ${message}`)
+    console.log(room, email, message)
+    io.to(room).emit('chat', email, message)
   })
 
   socket.on('move', async location => {
