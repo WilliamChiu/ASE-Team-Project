@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client';
-import { Stage, Sprite, Graphics } from '@inlet/react-pixi';
+import { Stage, Sprite, Text } from '@inlet/react-pixi';
+import { TextStyle } from 'pixi.js';
 import './Landing.css'
 
 let socket;
@@ -15,27 +16,46 @@ function Landing(props) {
     const [participants, setParticipants] = useState([])
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
-    const [closestRoom, setClosestRoom] = useState('')
+    const [prevMoved, setPrevMoved] = useState(false)
+
+    const chatRef = useRef(null)
+    chatRef.current = chat
+
 
     useEffect(() => {
         socket = io('ws://localhost:5000', {
             withCredentials: true
         })
     }, [])
+
+    const checkChat = () => {
+        let newChat = chatRef.current.filter(message => Date.now() - message.time < 5000)
+        console.log(newChat)
+        if (newChat.length !== chatRef.current.length) {
+            console.log("setting new chat", newChat, chatRef.current)
+            setChat(newChat)
+        }
+    }
+
     useEffect(() => {
-        const appendChat = message => {
-            let newChat = [...chat, message]
+        if (chat.length) setTimeout(checkChat, 5000)
+    }, [chat])
+
+    useEffect(() => {
+        const appendChat = (email, message) => {
+            let newChat = [...chat, { email, message, time: Date.now() }]
             setChat(newChat)
         }
         document.getElementById('room').style.backgroundImage = `url(${room.background})`
-        socket.on('chat', message => {
-            appendChat(message)
+        socket.on('chat', (email, message) => {
+            appendChat(email, message)
         })
         socket.on('room', (data, participants) => {
             setRoom(data)
             console.log(participants)
             setParticipants(participants)
         })
+
         return () => {
             socket.off('chat')
             socket.off('room')
@@ -47,13 +67,6 @@ function Landing(props) {
     }
     const sendMessage = e => {
         e.preventDefault()
-        if (message.substring(0, 5) === "/move") {
-            try {
-                let moveTo = JSON.parse(message.substring(6))
-                socket.emit('move', moveTo)
-            }
-            catch (e) {}
-        }
         socket.emit('chat', message)
         setMessage('')
     }
@@ -66,28 +79,23 @@ function Landing(props) {
     const movePointer = (e) => {
         console.log('key code', e.keyCode)
         let [curX, curY] = getLocation(participants, email)
-        console.log('position', curX * 8 * screenRatio - 20, curY * 8)
-
-        let coordX = curX * 8 * screenRatio - 20
-        let coordY = curY * 8
+        let nearAnExit = false
         room.exits.forEach(function (item) {
             var location = item.coords
-            console.log('x diff', Math.abs(location[1] - coordX))
-            console.log('y diff', Math.abs(location[0] - coordY))
-            if (Math.abs(location[1] - coordX) < 50 && Math.abs(location[0] - coordY) < 50) {
+            if (Math.abs(location[0] - curX) < 5 && Math.abs(location[1] - curY) < 5 && !prevMoved) {
                 console.log('CLOSEST ROOM', item.room)
-                setClosestRoom(item.room)
+                changeRoom(item.room)
+                nearAnExit = true
+                setPrevMoved(true)
             }
-        });    
-        console.log('closest exit', closestRoom)
+            else if (Math.abs(location[0] - curX) < 5 && Math.abs(location[1] - curY) < 5)
+                nearAnExit = true
+        });
+        console.log(prevMoved)
+        if (!nearAnExit) setPrevMoved(false)
 
         var x = e.keyCode;
         switch (x) {
-            case 13:
-                if (closestRoom != '') {
-                    changeRoom(closestRoom)
-                }
-                break;
             case 37:
                 socket.emit('move', [curX - 2.5, curY])
                 break;
@@ -108,22 +116,62 @@ function Landing(props) {
     return (
         <div className="Landing" id="room">
             {
-                room?.exits?.map(exit => 
-                    <div className="exitLabel" onClick={() => changeRoom(exit.room)} style={{ top: `${exit.coords[0]}px`, left: `${exit.coords[1]}px` }}>
+                room?.exits?.map(exit =>
+                    <div className="exitLabel" onClick={() => changeRoom(exit.room)} style={{ top: `${exit.coords[1]}vh`, left: `${exit.coords[0]}vw` }}>
                         <b>{exit.room.toUpperCase()}</b>
                     </div>)
             }
-            <Stage width={800 * screenRatio} height={800} tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
+            <Stage width={800 * screenRatio} height={800} tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{ outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)' }} options={{ transparent: true }}>
                 {
                     participants.map(p => {
-                        return <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.15 }} anchor={0.5} x={p.location[0] * 8 * screenRatio} y={p.location[1] * 8}/>
+                        return <Sprite
+                            id="lion"
+                            image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
+                            scale={{ x: 0.15, y: 0.15 }}
+                            anchor={0.5}
+                            x={p.location[0] * 8 * screenRatio}
+                            y={p.location[1] * 8}
+                        />
+                    })
+                }
+                {
+                    chat.map((c, i) => {
+                        let location = getLocation(participants, c.email)
+                        return <Text
+                            id={`chat${i}`}
+                            image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
+                            anchor={0.5}
+                            x={location[0] * 8 * screenRatio}
+                            y={location[1] * 8 - 50}
+                            style={
+                                new TextStyle({
+                                    align: 'center',
+                                    fontFamily: '"Comic Sans", Helvetica, sans-serif',
+                                    fontSize: 50,
+                                    fontWeight: 400,
+                                    fill: ['#ffffff', '#00ff99'], // gradient
+                                    stroke: '#01d27e',
+                                    strokeThickness: 5,
+                                    letterSpacing: 20,
+                                    dropShadow: true,
+                                    dropShadowColor: '#ccced2',
+                                    dropShadowBlur: 4,
+                                    dropShadowAngle: Math.PI / 6,
+                                    dropShadowDistance: 6,
+                                    wordWrap: true,
+                                    wordWrapWidth: 440,
+                                })
+                            }
+                            color={"white"}
+                            text={c.message}
+                        />
                     })
                 }
             </Stage>
             <div class="roomName">{room?.room}</div>
-            <div className="userInfo" style={{position: 'absolute', right: '20px', top: '20px'}}>
-                <span style={{paddingRight: "10px"}}>Welcome {props.displayName}</span>
-                <img src={props.photos[0].value} alt="User" style={{width: "50px", borderRadius: "50%"}} />
+            <div className="userInfo" style={{ position: 'absolute', right: '20px', top: '20px' }}>
+                <span style={{ paddingRight: "10px" }}>Welcome {props.displayName}</span>
+                <img src={props.photos[0].value} alt="User" style={{ width: "50px", borderRadius: "50%" }} />
             </div>
             {/*
             <div className="participants">
@@ -132,17 +180,12 @@ function Landing(props) {
                     participants.map(p => <p>{p.email} @ {p.location}</p>)
                 }
             </div>
+            */}
             <div className="chat">
-                <b>Chat:</b>
-                <div>
-                    {
-                        chat.map(message => <p>{message}</p>)
-                    }
-                </div>
                 <form onSubmit={sendMessage}>
                     <input type="text" value={message} onChange={handleMessage} />
                 </form>
-            </div>*/}
+            </div>
         </div>
     )
 }

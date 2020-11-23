@@ -11,8 +11,12 @@
 .chat {
     background-color: rgba(255, 255, 255, 0.6);
     padding: 20px;
-    float:right; 
-    width: 200px;
+    position:absolute;
+    bottom: 0;
+}
+
+.chat input {
+    width: 40rem;
 }
 
 .navigation {
