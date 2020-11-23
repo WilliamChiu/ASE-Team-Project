@@ -5,6 +5,7 @@
     background-image: none;
     background-size: cover;
     overflow-x: hidden;
+    background-position: center bottom;
 }
 
 .chat {
@@ -34,4 +35,21 @@
     background-color: rgba(255, 255, 255, 0.6);
     padding: 10px;
     border-radius: 10px;
+}
+
+.roomName {
+    font-weight: 800;
+    font-size: 30px;
+    background-color: rgba(255, 255, 255, 0.6);
+    display: inline-block;
+    margin-left: 45%;
+    padding: 10px;
+}
+
+.exitLabel {
+    background-color: #6c9eb88c;
+    position: absolute;
+    font-size: 20px;
+    color: white;
+    padding: 10px;
 }

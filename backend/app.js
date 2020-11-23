@@ -29,7 +29,7 @@ const Rooms = {}
 async function initRooms() {
   await new Promise(res => {
     MongoClient.connect(url, function (err, client) {
-      if (err) {
+      if (err) {        
         setTimeout(initRooms, 1000)
       }
       const db = client.db(dbName)

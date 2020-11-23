@@ -109,7 +109,7 @@ function Landing(props) {
         <div className="Landing" id="room">
             {
                 room?.exits?.map(exit => 
-                    <div onClick={() => changeRoom(exit.room)} style={{position: 'absolute', fontSize: '20px', color: 'white', top: `${exit.coords[0]}px`, left: `${exit.coords[1]}px` }}>
+                    <div className="exitLabel" onClick={() => changeRoom(exit.room)} style={{ top: `${exit.coords[0]}px`, left: `${exit.coords[1]}px` }}>
                         <b>{exit.room.toUpperCase()}</b>
                     </div>)
             }
@@ -120,7 +120,7 @@ function Landing(props) {
                     })
                 }
             </Stage>
-            <div style={{textAlign: "center", fontWeight: "800", fontSize: "30px" }}>Room: {room?.room}</div>
+            <div class="roomName">{room?.room}</div>
             <div className="userInfo" style={{position: 'absolute', right: '20px', top: '20px'}}>
                 <span style={{paddingRight: "10px"}}>Welcome {props.displayName}</span>
                 <img src={props.photos[0].value} alt="User" style={{width: "50px", borderRadius: "50%"}} />
