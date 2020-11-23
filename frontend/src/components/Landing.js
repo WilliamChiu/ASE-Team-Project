@@ -129,7 +129,7 @@ function Landing(props) {
                             x: p.location[0] * 8 * screenRatio,
                             y: p.location[1] * 8
                         }
-                        return <Spring native to={location}>
+                        return <Spring native to={location} config={{duration: 200}}>
                             { location => 
                                 <Sprite
                                     id="lion"
