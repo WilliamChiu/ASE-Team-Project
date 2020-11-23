@@ -27,6 +27,18 @@ const Lions = {}
 const Rooms = {}
 
 async function initRooms() {
+  let checkMongo = () => {
+    return new Promise(res => {
+      MongoClient.connect(url, async (err, client) => {
+        if (err) {
+          return await checkMongo()
+        }
+        client.close()
+        res()
+      })
+    })
+  }
+  await checkMongo()
   await new Promise(res => {
     MongoClient.connect(url, function (err, client) {
       if (err) {        
