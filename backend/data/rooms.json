@@ -1,35 +1,35 @@
 [
   {
-    "room": "butler",
+    "room": "Butler",
     "background": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Butler_Library_Columbia_University.jpg/2560px-Butler_Library_Columbia_University.jpg",
     "exits": [
       {
-        "room": "john jay",
-        "coords": [0, 30]
+        "room": "John Jay",
+        "coords": [400, 30]
       },
       {
-        "room": "lerner",
-        "coords": [100, 30]
+        "room": "Lerner",
+        "coords": [400, 1320]
       }
     ]
   },
   {
-    "room": "john jay",
+    "room": "John Jay",
     "background": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/John%20Jay/JohnJayHall.jpg",
     "exits": [
       {
-        "room": "butler",
-        "coords": [100, 30]
+        "room": "Butler",
+        "coords": [400, 1320]
       }
     ]
   },
   {
-    "room": "lerner",
+    "room": "Lerner",
     "background": "https://lernerhall.columbia.edu/files/lerner/content/columbia-31.gif",
     "exits": [
       {
-        "room": "butler",
-        "coords": [0, 50]
+        "room": "Butler",
+        "coords": [400, 30]
       }
     ]
   }
