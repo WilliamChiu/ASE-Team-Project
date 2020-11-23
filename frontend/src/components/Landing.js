@@ -10,6 +10,8 @@ function Landing(props) {
     const [participants, setParticipants] = useState([])
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
+    const [curX, setX] = useState(300)
+    const [curY, setY] = useState(300)
 
     useEffect(() => {
         socket = io('ws://localhost:5000', {
@@ -59,29 +61,25 @@ function Landing(props) {
     console.log(participants.length)
 
     const draw = React.useCallback(g => {
-        g.clear()
-        g.beginFill(0xff3300)
-        g.lineStyle(4, 0xffd900, 1)
-        g.moveTo(50, 50)
-        g.lineTo(250, 50)
-        g.lineTo(100, 100)
-        g.lineTo(50, 50)
-        g.endFill()
-        g.lineStyle(2, 0x0000ff, 1)
-        g.beginFill(0xff700b, 1)
-        g.drawRect(50, 150, 120, 120)
-        g.lineStyle(2, 0xff00ff, 1)
-        g.beginFill(0xff00bb, 0.25)
-        g.drawRoundedRect(150, 100, 300, 100, 15)
-        g.endFill()
-        g.lineStyle(0)
-        g.beginFill(0xffff0b, 0.5)
-        g.drawCircle(470, 90, 60)
-        g.endFill()
-      }, [])
+        g.clear();
+        g.beginFill('#a2a2a2');
+        g.drawRect(50, 200, 30, 40); // x, y, width, height
+        g.endFill();
+    }, [])
+
+    const updatePointer = (e) => {
+        console.log(e.screenX)
+        console.log(e.screenY)
+        setX(e.screenX * 0.6)
+        setY(e.screenY * 0.6)
+    }
+
     return (
         <div className="Landing" id="room">
-            <Stage><Graphics draw={draw}/></Stage>
+            <Stage onClick={(e) => updatePointer(e)} style={{position: 'absolute', border: '1px solid red', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
+                <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.2 }} anchor={0.5} x={curX} y={curY}/>
+                {/*<Graphics draw={draw}/>*/}
+            </Stage>
             <div style={{textAlign: "center", fontWeight: "800", fontSize: "30px"}}>Room: {room?.room}</div>
             <div className="userInfo" style={{float: "right"}}>
                 <span style={{paddingRight: "10px"}}>Welcome {props.displayName}</span>
