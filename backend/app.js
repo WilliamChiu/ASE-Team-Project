@@ -8,7 +8,7 @@ const io = require('socket.io')(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
-    credentials: true  
+    credentials: true
   }
 })
 // const session = require('express-session')
@@ -24,18 +24,56 @@ const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@m
 const dbName = 'roaree'
 
 const Lions = {}
-const Rooms = {}
+const Rooms = {}                       
 
-// Initialize Rooms
-MongoClient.connect(url, async (err, client) => {
-  if (err) return console.log(err);
-  const db = client.db(dbName)
-  const roomsCol = db.collection('rooms')
-  let rooms = await roomsCol.find().toArray()
-  rooms.map(({ room }) => {
-    Rooms[room] = new Set()
+async function initRooms() {
+  let checkMongo = () => {
+    return new Promise(res => {
+      setTimeout(() => {
+        MongoClient.connect(url, async (err, client) => {
+          if (err) {
+            return await checkMongo()
+          }
+          client.close()
+          res()
+        })
+      }, 1000)
+    })
+  }
+  await checkMongo()
+  await new Promise(res => {
+    MongoClient.connect(url, function (err, client) {
+      if (err) {        
+        setTimeout(initRooms, 1000)
+      }
+      const db = client.db(dbName)
+      const roomsCol = db.collection('rooms')
+      roomsCol.createIndex({ room: 1 }, { unique: true })
+      roomsCol.insertMany(rooms, (err, result) => {
+        console.log(err, result)
+        client.close()
+        res()
+      })
+      res()
+    })
   })
-})
+  // Initialize Rooms
+  await new Promise(res => {
+    MongoClient.connect(url, async (err, client) => {
+      if (err) return console.log(err);
+      const db = client.db(dbName)
+      const roomsCol = db.collection('rooms')
+      let rooms = await roomsCol.find().toArray()
+      rooms.map(({ room }) => {
+        Rooms[room] = new Set()
+      })
+      res()
+    })
+  })
+}
+
+initRooms()
+
 
 class Lion {
   constructor(socket, room, location) {
@@ -76,7 +114,7 @@ passport.use(new GoogleStrategy({
       const usersCol = db.collection('users')
       usersCol.findOne({ email }, (err, result) => {
         if (!result) {
-          usersCol.insertOne({ email, location: "butler" }, err => {
+          usersCol.insertOne({ email, location: "Butler" }, err => {
             if (err) console.log(err)
           })
         }
@@ -109,20 +147,6 @@ app.get('/success', (req, res) => {
   res.send(req.user)
 })
 app.get('/error', (req, res) => res.send("error logging in"))
-
-app.get('/initDatabase', (req, res) => {
-  MongoClient.connect(url, function (err, client) {
-    if (err) return console.log(err);
-    const db = client.db(dbName)
-    const roomsCol = db.collection('rooms')
-    roomsCol.createIndex({ room: 1 }, { unique: true })
-    roomsCol.insertMany(rooms, (err, result) => {
-      console.log(err, result)
-      client.close()
-      res.send("Initializing database")
-    })
-  })
-})
 
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages
@@ -157,7 +181,7 @@ const getRoomData = async room => {
 }
 
 
-io.on('connection', async socket => {
+io.on('connection', async socket => {              
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
   await new Promise(res => MongoClient.connect(url, function (err, client) {
@@ -180,42 +204,53 @@ io.on('connection', async socket => {
   }))
 
   socket.on('changeRoom', room => {
-    MongoClient.connect(url, function (err, client) {
-      // console.log(client)
-      const db = client.db(dbName)
-      const usersCol = db.collection('users')
-      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
-        // console.log(err, result)
-        client.close()
-        let from = Lions[email].room
-        let to = room
-        console.log("Updating location for " + email, from, to)
-        socket.leave(from)
-        Rooms[from].delete(email)
-        socket.join(to)
-        Rooms[to].add(email)
-        Lions[email].room = to
-        io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
-        io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
+    if (Rooms[room]) {
+      MongoClient.connect(url, function (err, client) {
+        // console.log(client)
+        const db = client.db(dbName)
+        const usersCol = db.collection('users')
+        usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
+          // console.log(err, result)
+          client.close()
+          let from = Lions[email].room
+          let to = room
+          console.log("Updating location for " + email, from, to)
+          socket.leave(from)
+          Rooms[from].delete(email)
+          socket.join(to)
+          Rooms[to].add(email)
+          Lions[email].room = to
+          io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+            let { location } = Lions[email]
+            return { email, location }
+          }))
+          io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+            let { location } = Lions[email]
+            return { email, location }
+          }))
+        })
       })
-    })
+    }
   })
 
   socket.on('chat', message => {
     let room = Lions[email].room
-    console.log(room, message)
-    io.to(room).emit('chat', `${email}: ${message}`)
+    console.log(room, email, message)
+    io.to(room).emit('chat', email, message)
   })
 
   socket.on('move', async location => {
     console.log("Moving", email, location)
-    if (!Lions[email]) {
+    if (typeof location !== "object") {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    location = location.map(i => parseInt(i))
+    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    else if (!Lions[email]) {
       socket.emit('error', "Please reconnect")
       return
     }
