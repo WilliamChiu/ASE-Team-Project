@@ -29,7 +29,9 @@ const Rooms = {}
 async function initRooms() {
   await new Promise(res => {
     MongoClient.connect(url, function (err, client) {
-      if (err) return console.log(err);
+      if (err) {
+        setTimeout(initRooms, 1000)
+      }
       const db = client.db(dbName)
       const roomsCol = db.collection('rooms')
       roomsCol.createIndex({ room: 1 }, { unique: true })
