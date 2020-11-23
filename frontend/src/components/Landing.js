@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'
 import io from 'socket.io-client';
-import { Stage, Sprite, Text } from '@inlet/react-pixi';
+import { Stage, Sprite, Text } from '@inlet/react-pixi/animated';
 import { TextStyle } from 'pixi.js';
+import { Spring } from 'react-spring'
 import './Landing.css'
 
 let socket;
@@ -124,14 +125,21 @@ function Landing(props) {
             <Stage width={800 * screenRatio} height={800} tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{ outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)' }} options={{ transparent: true }}>
                 {
                     participants.map(p => {
-                        return <Sprite
-                            id="lion"
-                            image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
-                            scale={{ x: 0.15, y: 0.15 }}
-                            anchor={0.5}
-                            x={p.location[0] * 8 * screenRatio}
-                            y={p.location[1] * 8}
-                        />
+                        let location = {
+                            x: p.location[0] * 8 * screenRatio,
+                            y: p.location[1] * 8
+                        }
+                        return <Spring native to={location} config={{duration: 200}}>
+                            { location => 
+                                <Sprite
+                                    id="lion"
+                                    image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
+                                    scale={{ x: 0.15, y: 0.15 }}
+                                    anchor={0.5}
+                                    {...location}
+                                />
+                            }
+                        </Spring>
                     })
                 }
                 {
