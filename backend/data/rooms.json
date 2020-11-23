@@ -67,7 +67,7 @@
         {
            "room":"Low Steps",
            "coords":[
-              90,
+              89,
               80
            ]
         },
@@ -236,14 +236,14 @@
         {
            "room":"Low Steps",
            "coords":[
-              88,
+              89,
               80
            ]
         },
         {
            "room":"Dodge",
            "coords":[
-              93,
+              91,
               50
            ]
         }
@@ -393,7 +393,7 @@
            "room":"Pupin",
            "coords":[
               2,
-              4
+              15
            ]
         },
         {

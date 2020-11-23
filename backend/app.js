@@ -181,7 +181,7 @@ const getRoomData = async room => {
 }
 
 
-io.on('connection', async socket => {          
+io.on('connection', async socket => {              
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
   await new Promise(res => MongoClient.connect(url, function (err, client) {
