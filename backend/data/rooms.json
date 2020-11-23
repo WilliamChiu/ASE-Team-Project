@@ -26,8 +26,12 @@
         "coords": [400, 1320]
       },
       {
-        "room": "Low Steps",
+        "room": "Hamilton",
         "coords": [730, 675]
+      },
+      {
+        "room": "Wallach",
+        "coords": [400, 30]
       }
     ]
   },
@@ -41,7 +45,15 @@
       },
       {
         "room": "Low Steps",
-        "coords": [730, 675]
+        "coords": [730, 1300]
+      }, 
+      {
+        "room": "Carman",
+        "coords": [30, 30]
+      },
+      {
+        "room": "Furnald",
+        "coords": [400, 1300]
       }
     ]
   }, 
@@ -51,7 +63,386 @@
     "exits": [
       {
         "room": "Butler",
-        "coords": [90, 675]
+        "coords": [730, 675]
+      }, 
+      {
+        "room": "Hamilton",
+        "coords": [730, 1280]
+      },
+      {
+        "room": "Furnald",
+        "coords": [730, 30]
+      },
+      {
+        "room": "Dodge",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Philosophy",
+        "coords": [400, 1280]
+      }, 
+      {
+        "room": "Schermerhorn",
+        "coords": [110, 1240]
+      }
+    ]
+  },
+  {
+    "room": "Wallach",
+    "background": "https://bwog.com/wp-content/uploads/2014/04/Wallach.jpg",
+    "exits": [
+      {
+        "room": "John Jay",
+        "coords": [400, 1300]
+      },
+      {
+        "room": "Hartley",
+        "coords": [400, 30]
+      }
+    ]
+  },
+  {
+    "room": "Hartley",
+    "background": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Hartley/HartleyHall.jpg",
+    "exits": [
+      {
+        "room": "Wallach",
+        "coords": [400, 1300]
+      },
+      {
+        "room": "Hamilton",
+        "coords": [400, 30]
+      }
+    ]
+  },
+  {
+    "room": "Hamilton",
+    "background": "https://lemiapp.com/api/v3/fullsize?url=https%3A%2F%2Ffinds.city%2Fuploads%2Fg-572763431235514371278982836129.jpg",
+    "exits": [
+      {
+        "room": "Hartley",
+        "coords": [400, 1320]
+      }, 
+      {
+        "room": "Low Steps",
+        "coords": [400, 30]
+      }
+    ]
+  },
+  {
+    "room": "Carman",
+    "background": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Carman/CarmanHall.jpg",
+    "exits": [
+      {
+        "room": "Lerner",
+        "coords": [400, 1320]
+      },
+      {
+        "room": "Butler",
+        "coords": [730, 675]
+      }
+    ]
+  },
+  {
+    "room": "Furnald",
+    "background": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Furnald/FurnaldHall.jpg",
+    "exits": [
+      {
+        "room": "Lerner",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Low Steps",
+        "coords": [730, 1300]
+      },
+      {
+        "room": "Dodge",
+        "coords": [400, 1320]
+      }
+    ]
+  },
+  {
+    "room": "Dodge",
+    "background": "https://www.titleixforall.com/wp-content/uploads/2014/10/dodge-hall-columbia-university-music-department-emma-sulkowicz-CUMB-Edith-Lerner.png",
+    "exits": [
+      {
+        "room": "Furnald",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Low Steps",
+        "coords": [730, 675]
+      },
+      {
+        "room": "Earl", 
+        "coords": [400, 1320]
+      }
+    ]
+  }, 
+  {
+    "room": "Earl",
+    "background": "https://upload.wikimedia.org/wikipedia/commons/1/13/Columbia_University_Earl_Hall_-_panoramio.jpg",
+    "exits": [
+      {
+        "room": "Dodge",
+        "coords": [400, 30] 
+      },
+      {
+        "room": "Low Steps",
+        "coords": [730, 675]
+      }, 
+      {
+        "room": "Havemeyer",
+        "coords": [400, 1280]
+      }, 
+      {
+        "room": "Mathematics",
+        "coords": [90, 1260]
+      },
+      {
+        "room": "Uris",
+        "coords": [730, 1320]
+      }
+    ]
+  },
+  {
+    "room": "Havemeyer", 
+    "background": "https://www.facilities.columbia.edu/drupal/facilities/files_facilities/imce_shared/Havermeyer_cropped.jpg",
+    "exits": [
+      {
+        "room": "Earl",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Uris",
+        "coords": [400, 1320]
+      },
+      {
+        "room": "Mathematics",
+        "coords": [30, 30]
+      }
+    ]
+  }, 
+  {
+    "room": "Mathematics",
+    "background": "https://images.squarespace-cdn.com/content/v1/553a8ddae4b0bd1c1a10972e/1523746970369-4JCTPYJUGX2UOHMTH24V/ke17ZwdGBToddI8pDm48kL3VKmwKI3leYB51VJjLFB8UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKcgK5SGg9Ovb1yloBBOHcruw_mYLfAhRzzgArFCB07Dw0L8n4JypuoE5Tg6Wg5Oyvs/mathe.jpg",
+    "exits": [
+      {
+        "room": "Havemeyer",
+        "coords": [400, 1280]
+      },
+      {
+        "room": "Uris",
+        "coords": [730, 1320]
+      }, {
+        "room": "Earl",
+        "coords": [400, 30]
+      }
+    ]
+  }, 
+  {
+    "room": "Uris",
+    "background": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Columbia_Business_School_-_Uris_Hall_%2848170436502%29.jpg",
+    "exits": [
+      {
+        "room": "Low Steps",
+        "coords": [730, 675]
+      },
+      {
+        "room": "Havemeyer",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Pupin",
+        "coords": [30, 30]
+      },
+      {
+        "room": "Earl",
+        "coords": [730, 30]
+      },
+      {
+        "room": "Schermerhorn",
+        "coords": [400, 1240]
+      }, 
+      {
+        "room": "Mudd",
+        "coords": [110, 1320]
+      }
+    ]
+  }, 
+  {
+    "room": "Philosophy",
+    "background": "https://www.markgarbowski.com/Public/TMG-2010/i-KTC6GvL/0/L/Rodin-Thinker-Philosophy-Hall-Columbia-University-L.jpg",
+    "exits": [
+      {
+        "room": "Low Steps",
+        "coords": [400, 30]
+      }, 
+      {
+        "room": "St. Paul's",
+        "coords": [30, 30]
+      }, 
+      {
+        "room": "Kent",
+        "coords": [400, 1320]
+      }
+    ]
+  },
+  {
+    "room": "St. Paul's",
+    "background": "https://upload.wikimedia.org/wikipedia/commons/5/5a/2014_Columbia_University_St._Paul%27s_Chapel.jpg",
+    "exits": [
+      {
+        "room": "Low Steps",
+        "coords": [400, 30]
+      }, 
+      {
+        "room": "Philosophy",
+        "coords": [400, 1280]
+      },
+      {
+        "room": "Kent",
+        "coords": [730, 675]
+      }
+    ]
+  },
+  {
+    "room": "Kent",
+    "background": "https://upload.wikimedia.org/wikipedia/commons/8/86/Kent_Hall%2C_Columbia_University.jpg",
+    "exits": [
+      {
+        "room": "St. Paul's",
+        "coords": [400, 30]
+      }, 
+      {
+        "room": "Philosophy",
+        "coords": [30, 30]
+      },
+      {
+        "room": "Low Steps",
+        "coords": [730, 30]
+      }
+    ]
+  },
+  {
+    "room": "Schermerhorn",
+    "background": "https://psychology.columbia.edu/sites/default/files/styles/cu_crop/public/2016-11/Schermerhorn_Ext.JPG?itok=izhdWqss",
+    "exits": [
+      {
+        "room": "Uris",
+        "coords": [30, 30]
+      },
+      {
+        "room": "Avery",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Fayerweather",
+        "coords": [400, 1240]
+      },
+      {
+        "room": "Low Steps",
+        "coords": [730, 30]
+      }
+    ]
+  },
+  {
+    "room": "Avery", 
+    "background": "https://images.adsttc.com/media/images/58af/5e87/e58e/ce4c/d100/028b/large_jpg/Avery_Hall_at_night_by_Ofer_Wolberger.jpg?1487887997",
+    "exits": [
+      {
+        "room": "Schermerhorn",
+        "coords": [400, 1240]
+      },
+      {
+        "room": "Fayerweather",
+        "coords": [730, 675]
+      },
+      {
+        "room": "Uris", 
+        "coords": [30, 1320]
+      }
+    ]
+  },
+  {
+    "room": "Fayerweather", 
+    "background": "https://admissionsblog.sipa.columbia.edu/wp-content/uploads/2017/02/tour-fayerweather8.png",
+    "exits": [
+      {
+        "room": "Schermerhorn",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Avery",
+        "coords": [730, 675]
+      }
+    ]
+  },
+  {
+    "room": "Pupin",
+    "background": "https://upload.wikimedia.org/wikipedia/commons/4/45/Columbia_University_-_Department_of_Physics_%2848170362276%29.jpg",
+    "exits": [
+      {
+        "room": "Uris",
+        "coords": [730, 1320]
+      },
+      {
+        "room": "Schapiro",
+        "coords": [400, 1300]
+      },
+      {
+        "room": "NoCo",
+        "coords": [400, 30]
+      }
+    ]
+  },
+  {
+    "room": "NoCo",
+    "background": "https://www.archute.com/wp-content/uploads/2016/01/columbia-university-northwest-corner-building-30.jpg",
+    "exits": [
+      {
+        "room": "Pupin",
+        "coords": [400, 1320]
+      },
+      {
+        "room": "Schapiro",
+        "coords": [730, 675]
+      }
+    ]
+  }, 
+  {
+    "room": "Schapiro",
+    "background": "https://sensys.acm.org/2019/resources/images/venue/CEPSR-min.jpg",
+    "exits": [
+      {
+        "room": "Pupin",
+        "coords": [30, 30]
+      }, 
+      {
+        "room": "NoCo",
+        "coords": [400, 30]
+      },
+      {
+        "room": "Uris",
+        "coords": [730, 675]
+      },
+      {
+        "room": "Mudd",
+        "coords": [400, 1320]
+      }
+    ]
+  },
+  {
+    "room": "Mudd",
+    "background": "https://evergreene.com/wp-content/uploads/2018/12/Le-m.jpg",
+    "exits": [
+      {
+        "room": "Schapiro",
+        "coords": [30, 30]
+      },
+      {
+        "room": "Uris",
+        "coords": [730, 30]
       }
     ]
   }

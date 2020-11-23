@@ -126,12 +126,6 @@ function Landing(props) {
                 <img src={props.photos[0].value} alt="User" style={{width: "50px", borderRadius: "50%"}} />
             </div>
             {/*
-            <div className="participants">
-            <b>Participants:</b>
-                {
-                    participants.map(p => <p>{p.email} @ {p.location}</p>)
-                }
-            </div>
             <div className="chat">
                 <b>Chat:</b>
                 <div>

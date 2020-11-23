@@ -24,7 +24,7 @@ const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@m
 const dbName = 'roaree'
 
 const Lions = {}
-const Rooms = {}
+const Rooms = {}                       
 
 async function initRooms() {
   let checkMongo = () => {
