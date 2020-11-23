@@ -33,6 +33,11 @@ function Landing(props) {
             console.log(participants)
             setParticipants(participants)
         })
+        console.log(room.exits)
+        room?.exits?.forEach(function (item) {
+            console.log(item.coords[0]);
+            console.log(item.coords[1]);
+        });
         return () => {
             socket.off('chat')
             socket.off('room')
@@ -81,6 +86,7 @@ function Landing(props) {
 
     return (
         <div className="Landing" id="room">
+            {room?.exits?.map(exit => <div style={{position: 'absolute', color: 'white', top: `${exit.coords[0]}px`, left: `${exit.coords[1]}px` }}>{exit.room}</div>)}
             <Stage tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
                 <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.2 }} anchor={0.5} x={curX} y={curY}/>
                 {/*<Graphics draw={draw}/>*/}
@@ -90,6 +96,7 @@ function Landing(props) {
                 <span style={{paddingRight: "10px"}}>Welcome {props.displayName}</span>
                 <img src={props.photos[0].value} alt="User" style={{width: "50px", borderRadius: "50%"}} />
             </div>
+            {/*
             <div className="navigation">
                 <b>Go to:</b>
                 {
@@ -101,7 +108,7 @@ function Landing(props) {
                 {
                     participants.map(p => <p>{p.email} @ {p.location}</p>)
                 }
-            </div>
+            </div>*/}
             <div className="chat">
                 <b>Chat:</b>
                 <div>
