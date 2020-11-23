@@ -7,21 +7,21 @@
            "room":"John Jay",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Lerner",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
               51,
-              80
+              90
            ]
         }
      ]
@@ -33,22 +33,22 @@
         {
            "room":"Butler",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"Hamilton",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Wallach",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -61,13 +61,13 @@
            "room":"Butler",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
-              80,
+              90,
               80
            ]
         },
@@ -81,8 +81,8 @@
         {
            "room":"Furnald",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         }
      ]
@@ -95,13 +95,13 @@
            "room":"Butler",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Hamilton",
            "coords":[
-              80,
+              90,
               80
            ]
         },
@@ -116,22 +116,29 @@
            "room":"Dodge",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Philosophy",
            "coords":[
-              80,
-              55
+              88,
+              50
            ]
         },
         {
            "room":"Schermerhorn",
            "coords":[
-              80,
+              85,
               15
            ]
+        },
+        {
+          "room": "Havemeyer",
+          "coords": [
+            2,
+            15
+          ]
         }
      ]
   },
@@ -142,15 +149,15 @@
         {
            "room":"John Jay",
            "coords":[
-              80,
-              55
+              88,
+              50
            ]
         },
         {
            "room":"Hartley",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -162,15 +169,15 @@
         {
            "room":"Wallach",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"Hamilton",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -182,15 +189,15 @@
         {
            "room":"Hartley",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -202,15 +209,15 @@
         {
            "room":"Lerner",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"Butler",
            "coords":[
               51,
-              80
+              90
            ]
         }
      ]
@@ -223,21 +230,21 @@
            "room":"Lerner",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
-              80,
+              88,
               80
            ]
         },
         {
            "room":"Dodge",
            "coords":[
-              80,
-              55
+              93,
+              50
            ]
         }
      ]
@@ -250,21 +257,21 @@
            "room":"Furnald",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Earl",
            "coords":[
-              80,
-              55
+              93,
+              50
            ]
         }
      ]
@@ -277,34 +284,34 @@
            "room":"Dodge",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Low Steps",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Havemeyer",
            "coords":[
-              80,
-              55
+              88,
+              50
            ]
         },
         {
            "room":"Mathematics",
            "coords":[
-              80,
+              87,
               12
            ]
         },
         {
            "room":"Uris",
            "coords":[
-              80,
+              93,
               80
            ]
         }
@@ -318,14 +325,14 @@
            "room":"Earl",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Uris",
            "coords":[
-              80,
-              55
+              93,
+              50
            ]
         },
         {
@@ -344,14 +351,14 @@
         {
            "room":"Havemeyer",
            "coords":[
-              80,
-              55
+              88,
+              50
            ]
         },
         {
            "room":"Uris",
            "coords":[
-              80,
+              93,
               80
            ]
         },
@@ -359,7 +366,7 @@
            "room":"Earl",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -372,14 +379,14 @@
            "room":"Low Steps",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Havemeyer",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
@@ -399,14 +406,14 @@
         {
            "room":"Schermerhorn",
            "coords":[
-              80,
-              55
+              85,
+              50
            ]
         },
         {
            "room":"Mudd",
            "coords":[
-              80,
+              92,
               15
            ]
         }
@@ -420,7 +427,7 @@
            "room":"Low Steps",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
@@ -433,8 +440,8 @@
         {
            "room":"Kent",
            "coords":[
-              80,
-              55
+              93,
+              50
            ]
         }
      ]
@@ -447,21 +454,21 @@
            "room":"Low Steps",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Philosophy",
            "coords":[
-              80,
-              55
+              88,
+              50
            ]
         },
         {
            "room":"Kent",
            "coords":[
               51,
-              80
+              90
            ]
         }
      ]
@@ -474,7 +481,7 @@
            "room":"St. Paul's",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
@@ -508,14 +515,14 @@
            "room":"Avery",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Fayerweather",
            "coords":[
-              80,
-              55
+              85,
+              50
            ]
         },
         {
@@ -529,27 +536,27 @@
   },
   {
      "room":"Avery",
-     "background":"https://images.adsttc.com/media/images/58af/5e87/e58e/ce4c/d80/028b/large_jpg/Avery_Hall_at_night_by_Ofer_Wolberger.jpg?1487887997",
+     "background":"https://images.adsttc.com/media/images/58af/5e87/e58e/ce4c/d100/028b/large_jpg/Avery_Hall_at_night_by_Ofer_Wolberger.jpg?1487887997",
      "exits":[
         {
            "room":"Schermerhorn",
            "coords":[
-              80,
-              55
+              85,
+              50
            ]
         },
         {
            "room":"Fayerweather",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Uris",
            "coords":[
-              80,
-              4
+              93,
+              15
            ]
         }
      ]
@@ -562,14 +569,14 @@
            "room":"Schermerhorn",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Avery",
            "coords":[
               51,
-              80
+              90
            ]
         }
      ]
@@ -581,22 +588,22 @@
         {
            "room":"Uris",
            "coords":[
-              80,
+              93,
               80
            ]
         },
         {
            "room":"Schapiro",
            "coords":[
-              80,
-              55
+              90,
+              50
            ]
         },
         {
            "room":"NoCo",
            "coords":[
               2,
-              55
+              50
            ]
         }
      ]
@@ -608,15 +615,15 @@
         {
            "room":"Pupin",
            "coords":[
-              80,
-              55
+              92,
+              50
            ]
         },
         {
            "room":"Schapiro",
            "coords":[
               51,
-              80
+              90
            ]
         }
      ]
@@ -636,21 +643,21 @@
            "room":"NoCo",
            "coords":[
               2,
-              55
+              50
            ]
         },
         {
            "room":"Uris",
            "coords":[
               51,
-              80
+              90
            ]
         },
         {
            "room":"Mudd",
            "coords":[
-              80,
-              55
+              92,
+              50
            ]
         }
      ]
