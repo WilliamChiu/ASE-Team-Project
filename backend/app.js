@@ -28,18 +28,24 @@ const Rooms = {}
 
 async function initRooms() {
   await new Promise(res => {
-    MongoClient.connect(url, function (err, client) {
-      if (err) return console.log(err);
-      const db = client.db(dbName)
-      const roomsCol = db.collection('rooms')
-      roomsCol.createIndex({ room: 1 }, { unique: true })
-      roomsCol.insertMany(rooms, (err, result) => {
-        console.log(err, result)
-        client.close()
+    MongoClient.connect(url,
+      {
+        // retry to connect for 60 times
+        reconnectTries: 60,
+        // wait 1 second before retrying
+        reconnectInterval: 1000
+      }, function (err, client) {
+        if (err) return console.log(err);
+        const db = client.db(dbName)
+        const roomsCol = db.collection('rooms')
+        roomsCol.createIndex({ room: 1 }, { unique: true })
+        roomsCol.insertMany(rooms, (err, result) => {
+          console.log(err, result)
+          client.close()
+          res()
+        })
         res()
       })
-      res()
-    })
   })
   // Initialize Rooms
   await new Promise(res => {
