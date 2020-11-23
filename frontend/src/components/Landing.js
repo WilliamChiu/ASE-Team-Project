@@ -201,7 +201,7 @@ function Landing(props) {
             </div>
             <div className="chat">
                 <form onSubmit={sendMessage}>
-                    <input type="text" value={message} onChange={handleMessage} />
+                    <input id="login" placeholder="Send a message..." type="text" value={message} onChange={handleMessage} />
                 </form>
             </div>
         </div>
