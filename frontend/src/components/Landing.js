@@ -88,7 +88,7 @@ function Landing(props) {
                 nearAnExit = true
                 setPrevMoved(true)
             }
-            else if (Math.abs(location[0] - curX) < 5 && Math.abs(location[1] - curY) < 5)
+            else if (Math.abs(location[0] - curX) < 10 && Math.abs(location[1] - curY) < 10)
                 nearAnExit = true
         });
         console.log(prevMoved)
