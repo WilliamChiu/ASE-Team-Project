@@ -5,13 +5,16 @@ import './Landing.css'
 
 let socket;
 
+function getLocation(participants, email) {
+    return participants.find(p => p.email === email).location
+}
+
 function Landing(props) {
+    let email = props._json.email
     const [room, setRoom] = useState({})
     const [participants, setParticipants] = useState([])
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
-    const [curX, setX] = useState(300)
-    const [curY, setY] = useState(300)
 
     useEffect(() => {
         socket = io('ws://localhost:5000', {
@@ -62,27 +65,36 @@ function Landing(props) {
 
     const movePointer = (e) => {
         console.log(e.keyCode)
+        let [curX, curY] = getLocation(participants, email)
+        console.log(curX, curY)
         var x = e.keyCode;
         switch (x) {
             case 37:
-                setX(curX - 10)
+                socket.emit('move', [curX - 2.5, curY])
                 break;
             case 39:
-                setX(curX + 10)
+                socket.emit('move', [curX + 2.5, curY])
                 break;
             case 38:
-                setY(curY - 10)
+                socket.emit('move', [curX, curY - 2.5])
                 break;
             case 40:
-                setY(curY + 10)
+                socket.emit('move', [curX, curY + 2.5])
                 break;
         }
     }
 
+    let screenRatio = window.innerWidth / window.innerHeight
+
     return (
         <div className="Landing" id="room">
-            <Stage tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
-                <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.2 }} anchor={0.5} x={curX} y={curY}/>
+            <Stage width={800 * screenRatio} height={800} tabIndex="0" onKeyDown={(e) => movePointer(e)} style={{outline: 'none', position: 'absolute', width: 'calc(100vw - 40px)', height: 'calc(100vh - 40px)'}} options={{transparent: true}}>
+                {
+                    participants.map(p => {
+                        return <Sprite id="lion" image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png" scale={{ x: 0.15, y: 0.2 }} anchor={0.5} x={p.location[0] * 8 * screenRatio} y={p.location[1] * 8}/>
+                    })
+                }
+                
                 {/*<Graphics draw={draw}/>*/}
             </Stage>
             <div style={{textAlign: "center", fontWeight: "800", fontSize: "30px"}}>Room: {room?.room}</div>

@@ -8,7 +8,7 @@ const io = require('socket.io')(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
-    credentials: true  
+    credentials: true
   }
 })
 // const session = require('express-session')
@@ -26,16 +26,38 @@ const dbName = 'roaree'
 const Lions = {}
 const Rooms = {}
 
-// Initialize Rooms
-MongoClient.connect(url, async (err, client) => {
-  if (err) return console.log(err);
-  const db = client.db(dbName)
-  const roomsCol = db.collection('rooms')
-  let rooms = await roomsCol.find().toArray()
-  rooms.map(({ room }) => {
-    Rooms[room] = new Set()
+async function initRooms() {
+  await new Promise(res => {
+    MongoClient.connect(url, function (err, client) {
+      if (err) return console.log(err);
+      const db = client.db(dbName)
+      const roomsCol = db.collection('rooms')
+      roomsCol.createIndex({ room: 1 }, { unique: true })
+      roomsCol.insertMany(rooms, (err, result) => {
+        console.log(err, result)
+        client.close()
+        res()
+      })
+      res()
+    })
   })
-})
+  // Initialize Rooms
+  await new Promise(res => {
+    MongoClient.connect(url, async (err, client) => {
+      if (err) return console.log(err);
+      const db = client.db(dbName)
+      const roomsCol = db.collection('rooms')
+      let rooms = await roomsCol.find().toArray()
+      rooms.map(({ room }) => {
+        Rooms[room] = new Set()
+      })
+      res()
+    })
+  })
+}
+
+initRooms()
+
 
 class Lion {
   constructor(socket, room, location) {
@@ -109,20 +131,6 @@ app.get('/success', (req, res) => {
   res.send(req.user)
 })
 app.get('/error', (req, res) => res.send("error logging in"))
-
-app.get('/initDatabase', (req, res) => {
-  MongoClient.connect(url, function (err, client) {
-    if (err) return console.log(err);
-    const db = client.db(dbName)
-    const roomsCol = db.collection('rooms')
-    roomsCol.createIndex({ room: 1 }, { unique: true })
-    roomsCol.insertMany(rooms, (err, result) => {
-      console.log(err, result)
-      client.close()
-      res.send("Initializing database")
-    })
-  })
-})
 
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages
@@ -222,7 +230,7 @@ io.on('connection', async socket => {
       return
     }
     location = location.map(i => parseInt(i))
-    if (location.length !== 2 || location[0] < 0 || location[1] > 100 || location[1] < 0 || location[1] > 100) {
+    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
       socket.emit('error', "Invalid location")
       return
     }
