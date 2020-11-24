@@ -142,6 +142,45 @@ function Landing(props) {
                         </Spring>
                     })
                 }
+                {/* {
+                    participants.map(p => {
+                        let location = {
+                            x: p.location[0] * 8 * screenRatio,
+                            y: p.location[1] * 8 + 50
+                        }
+                        return <Spring native to={location} config={{duration: 200}}>
+                            { location => 
+                                <Text
+                                id={`chat${p.email}`}
+                                image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
+                                anchor={0.5}
+                                {...location}
+                                style={
+                                    new TextStyle({
+                                        align: 'center',
+                                        fontFamily: '"Comic Sans", Helvetica, sans-serif',
+                                        fontSize: 30,
+                                        fontWeight: 100,
+                                        fill: ['#ffffff'], // gradient
+                                        stroke: '#01d27e',
+                                        strokeThickness: 5,
+                                        letterSpacing: 20,
+                                        dropShadow: true,
+                                        dropShadowColor: '#ccced2',
+                                        dropShadowBlur: 4,
+                                        dropShadowAngle: Math.PI / 6,
+                                        dropShadowDistance: 6,
+                                        wordWrap: true,
+                                        wordWrapWidth: 440,
+                                    })
+                                }
+                                color={"white"}
+                                text={p.email}
+                            />
+                            }
+                        </Spring>
+                    })
+                } */}
                 {
                     participants.map(p => {
                         let location = {
