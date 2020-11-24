@@ -1,7 +1,6 @@
 const express = require('express')
 const session = require('express-session')
 const app = express()
-//const EventEmitter = require('events');
 const server = require('http').createServer(app)
 const bodyParser = require('body-parser')
 const io = require('socket.io')(server, {
@@ -9,10 +8,9 @@ const io = require('socket.io')(server, {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  maxHttpBufferSize: 1e4
 })
-// const session = require('express-session')
-//require('dotenv').config()
 const passport = require('passport')
 const rooms = require('./data/rooms.json')
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
@@ -24,26 +22,27 @@ const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@m
 const dbName = 'roaree'
 
 const Lions = {}
-const Rooms = {}                       
+const Rooms = {}
 
 async function initRooms() {
-  let checkMongo = () => {
-    return new Promise(res => {
-      setTimeout(() => {
-        MongoClient.connect(url, async (err, client) => {
-          if (err) {
-            return await checkMongo()
-          }
+  let mongoOnline = false
+  while (!mongoOnline) {
+    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(res => {
+      console.log("Checking Mongo...")
+      MongoClient.connect(url, async (err, client) => {
+        if (!err) {
+          mongoOnline = true
           client.close()
-          res()
-        })
-      }, 1000)
+        }
+        res()
+      })
     })
   }
-  await checkMongo()
+  console.log("Inserting necessary rooms...")
   await new Promise(res => {
     MongoClient.connect(url, function (err, client) {
-      if (err) {        
+      if (err) {
         setTimeout(initRooms, 1000)
       }
       const db = client.db(dbName)
@@ -54,10 +53,10 @@ async function initRooms() {
         client.close()
         res()
       })
-      res()
     })
   })
   // Initialize Rooms
+  console.log("Initializing in-memory rooms...")
   await new Promise(res => {
     MongoClient.connect(url, async (err, client) => {
       if (err) return console.log(err);
