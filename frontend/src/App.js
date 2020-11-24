@@ -12,7 +12,7 @@ function App() {
           {Object.keys(authCreds).length === 0 ? <Login setAuth={setAuth} authCreds={authCreds} /> : <Redirect to='/landing' /> }
         </Route>
         <Route exact path='/landing'>
-          <Landing {...authCreds} />
+          <Landing {...authCreds} setAuth={setAuth} />
         </Route>
       </Switch>
     </Router>

@@ -143,31 +143,49 @@ function Landing(props) {
                     })
                 }
                 {
+                    participants.map(p => {
+                        let location = {
+                            x: p.location[0] * 8 * screenRatio,
+                            y: p.location[1] * 8
+                        }
+                        return <Text
+                            anchor={0.5}
+                            x={location.x}
+                            y={location.y + 60}
+                            style={
+                                new TextStyle({
+                                    align: 'center',
+                                    fontFamily: '"Trebuchet MS", Helvetica, sans-serif',
+                                    fontSize: 20,
+                                    wordWrap: true,
+                                    wordWrapWidth: 440,
+                                    dropShadow: true,
+                                    fill: "white",
+                                    padding: 10,
+                                })
+                            }
+                            text={props.displayName}
+                        />
+                    })
+                }
+                {
                     chat.map((c, i) => {
                         let location = getLocation(participants, c.email)
                         return <Text
                             id={`chat${i}`}
-                            image="https://res.cloudinary.com/dvuwk1oua/image/upload/v1606107580/lion_cavx4g.png"
                             anchor={0.5}
                             x={location[0] * 8 * screenRatio}
-                            y={location[1] * 8 - 50}
+                            y={location[1] * 8 - 60}
                             style={
                                 new TextStyle({
                                     align: 'center',
-                                    fontFamily: '"Comic Sans", Helvetica, sans-serif',
-                                    fontSize: 50,
-                                    fontWeight: 400,
-                                    fill: ['#ffffff', '#00ff99'], // gradient
-                                    stroke: '#01d27e',
-                                    strokeThickness: 5,
-                                    letterSpacing: 20,
-                                    dropShadow: true,
-                                    dropShadowColor: '#ccced2',
-                                    dropShadowBlur: 4,
-                                    dropShadowAngle: Math.PI / 6,
-                                    dropShadowDistance: 6,
+                                    fontFamily: '"Trebuchet MS", Helvetica, sans-serif',
+                                    fontSize: 20,
                                     wordWrap: true,
                                     wordWrapWidth: 440,
+                                    dropShadow: true,
+                                    fill: "white",
+                                    padding: 10,
                                 })
                             }
                             color={"white"}
@@ -183,7 +201,7 @@ function Landing(props) {
             </div>
             <div className="chat">
                 <form onSubmit={sendMessage}>
-                    <input type="text" value={message} onChange={handleMessage} />
+                    <input id="login" placeholder="Send a message..." type="text" value={message} onChange={handleMessage} />
                 </form>
             </div>
         </div>

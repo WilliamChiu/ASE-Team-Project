@@ -17,7 +17,7 @@ const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
 const cors = require('cors')
-const MongoClient = require('mongodb').MongoClient
+const MongoClient = require('mongodb').MongoClient 
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
 
@@ -180,7 +180,7 @@ const getRoomData = async room => {
 }
 
 
-io.on('connection', async socket => {
+io.on('connection', async socket => {              
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
   await new Promise(res => MongoClient.connect(url, function (err, client) {
