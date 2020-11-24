@@ -1,7 +1,6 @@
 const express = require('express')
 const session = require('express-session')
 const app = express()
-//const EventEmitter = require('events');
 const server = require('http').createServer(app)
 const bodyParser = require('body-parser')
 const io = require('socket.io')(server, {
@@ -9,10 +8,9 @@ const io = require('socket.io')(server, {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  maxHttpBufferSize: 1e4
 })
-// const session = require('express-session')
-//require('dotenv').config()
 const passport = require('passport')
 const rooms = require('./data/rooms.json')
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
@@ -24,26 +22,29 @@ const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@m
 const dbName = 'roaree'
 
 const Lions = {}
-const Rooms = {}                       
+const Rooms = {}
+
+const EXCEPTIONS = ["williamchiu16@gmail.com", "william.chiu16@gmail.com"]
 
 async function initRooms() {
-  let checkMongo = () => {
-    return new Promise(res => {
-      setTimeout(() => {
-        MongoClient.connect(url, async (err, client) => {
-          if (err) {
-            return await checkMongo()
-          }
+  let mongoOnline = false
+  while (!mongoOnline) {
+    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(res => {
+      console.log("Checking Mongo...")
+      MongoClient.connect(url, async (err, client) => {
+        if (!err) {
+          mongoOnline = true
           client.close()
-          res()
-        })
-      }, 1000)
+        }
+        res()
+      })
     })
   }
-  await checkMongo()
+  console.log("Inserting necessary rooms...")
   await new Promise(res => {
     MongoClient.connect(url, function (err, client) {
-      if (err) {        
+      if (err) {
         setTimeout(initRooms, 1000)
       }
       const db = client.db(dbName)
@@ -54,10 +55,10 @@ async function initRooms() {
         client.close()
         res()
       })
-      res()
     })
   })
   // Initialize Rooms
+  console.log("Initializing in-memory rooms...")
   await new Promise(res => {
     MongoClient.connect(url, async (err, client) => {
       if (err) return console.log(err);
@@ -102,26 +103,40 @@ passport.use(new GoogleStrategy({
 },
   function (accessToken, refreshToken, profile, done) {
     let email = profile?._json?.email
-    // if (!email)
-    //   done(null, false, { message: "Not a Columbia/Barnard email" })
-    // else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
-    //   done(null, false, { message: "Not a Columbia/Barnard email" })
-    // else if (loggedIn(email))
-    //   done(null, false, { message: "Already logged in" })
-    // else {
-    MongoClient.connect(url, function (err, client) {
-      const db = client.db(dbName)
-      const usersCol = db.collection('users')
-      usersCol.findOne({ email }, (err, result) => {
-        if (!result) {
-          usersCol.insertOne({ email, location: "Butler" }, err => {
-            if (err) console.log(err)
-          })
-        }
+    if (EXCEPTIONS.includes(email)) {
+      MongoClient.connect(url, function (err, client) {
+        const db = client.db(dbName)
+        const usersCol = db.collection('users')
+        usersCol.findOne({ email }, (err, result) => {
+          if (!result) {
+            usersCol.insertOne({ email, location: "Butler" }, err => {
+              if (err) console.log(err)
+            })
+          }
+        })
       })
-    })
-    return done(null, profile)
-    // }
+      return done(null, profile)
+    }
+    if (!email)
+      done(null, false, { message: "Not a Columbia/Barnard email" })
+    else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
+      done(null, false, { message: "Not a Columbia/Barnard email" })
+    else if (loggedIn(email))
+      done(null, false, { message: "Already logged in" })
+    else {
+      MongoClient.connect(url, function (err, client) {
+        const db = client.db(dbName)
+        const usersCol = db.collection('users')
+        usersCol.findOne({ email }, (err, result) => {
+          if (!result) {
+            usersCol.insertOne({ email, location: "Butler" }, err => {
+              if (err) console.log(err)
+            })
+          }
+        })
+      })
+      return done(null, profile)
+    }
   }
 ))
 
@@ -192,8 +207,8 @@ io.on('connection', async socket => {
       console.log("Joining " + from)
       socket.join(from)
       Lions[email] = new Lion(socket, from, [50, 50])
-      console.log(Rooms)
       Rooms[from].add(email)
+      console.log(Rooms)
       io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
         let { location } = Lions[email]
         return { email, location }
@@ -214,17 +229,17 @@ io.on('connection', async socket => {
           client.close()
           let from = Lions[email].room
           let to = room
-          console.log("Updating location for " + email, from, to)
+          console.log("Updating location for ", email, from, to)
           socket.leave(from)
           Rooms[from].delete(email)
           socket.join(to)
           Rooms[to].add(email)
           Lions[email].room = to
-          io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+          if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
             let { location } = Lions[email]
             return { email, location }
           }))
-          io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+          if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
             let { location } = Lions[email]
             return { email, location }
           }))
@@ -260,6 +275,7 @@ io.on('connection', async socket => {
       socket.emit('error', "Please reconnect")
       return
     }
+    console.log(email, room)
     io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
