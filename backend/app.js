@@ -237,6 +237,8 @@ io.on('connection', async socket => {
           Lions[email].room = to
           if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
             let { location } = Lions[email]
+            console.log("TEST!!!!!!!")
+            console.log(location)
             return { email, location }
           }))
           if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
