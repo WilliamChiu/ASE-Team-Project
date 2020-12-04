@@ -26,6 +26,42 @@ const Rooms = {}
 
 const EXCEPTIONS = ["williamchiu16@gmail.com", "william.chiu16@gmail.com"]
 
+
+const profile_mock = {
+  id: '104656250682509765796',
+  displayName: 'Phu D Pham',
+  name: { familyName: 'Pham', givenName: 'Phu D' },
+  emails: [ { value: 'pdp2121@columbia.edu', verified: true } ],
+  photos: [
+    {
+      value: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg'
+    }
+  ],
+  provider: 'google',
+  _raw: '{\n' +
+    '  "sub": "104656250682509765796",\n' +
+    '  "name": "Phu D Pham",\n' +
+    '  "given_name": "Phu D",\n' +
+    '  "family_name": "Pham",\n' +
+    '  "picture": "https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg",\n' +
+    '  "email": "pdp2121@columbia.edu",\n' +
+    '  "email_verified": true,\n' +
+    '  "locale": "en",\n' +
+    '  "hd": "columbia.edu"\n' +
+    '}',
+  _json: {
+    sub: '104656250682509765796',
+    name: 'Phu D Pham',
+    given_name: 'Phu D',
+    family_name: 'Pham',
+    picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+    email: 'pdp2121@columbia.edu',
+    email_verified: true,
+    locale: 'en',
+    hd: 'columbia.edu'
+  }
+};
+
 async function initRooms() {
   let mongoOnline = false
   while (!mongoOnline) {
@@ -102,7 +138,11 @@ passport.use(new GoogleStrategy({
   callbackURL: "http://localhost:5000/auth/google/callback"
 },
   function (accessToken, refreshToken, profile, done) {
+    console.log("HEREEEE!!!!")
+    console.log(profile)
     let email = profile?._json?.email
+    console.log("HEREEEE HEREEEEEE!!!!")
+    console.log(email)
     if (EXCEPTIONS.includes(email)) {
       MongoClient.connect(url, function (err, client) {
         const db = client.db(dbName)
@@ -143,7 +183,21 @@ passport.use(new GoogleStrategy({
 app.use(bodyParser.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 const sessionMiddleware = session({ secret: 'keyboard cat', resave: false, saveUninitialized: true })
-app.use(sessionMiddleware)
+
+const mockMiddleware = (req, _, next) => {
+  req.user = profile_mock;
+  req.isAuthenticated = () => true;
+  next();
+};
+
+const shouldMockAuthentication = false;
+
+if(shouldMockAuthentication){
+  app.use(mockMiddleware)
+} else{
+  app.use(sessionMiddleware)
+}
+
 app.use(passport.initialize())
 app.use(passport.session())
 
@@ -235,6 +289,7 @@ io.on('connection', async socket => {
           socket.join(to)
           Rooms[to].add(email)
           Lions[email].room = to
+          console.log(Lions[email])
           if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
             let { location } = Lions[email]
             return { email, location }
