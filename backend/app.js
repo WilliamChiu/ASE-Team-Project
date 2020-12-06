@@ -138,11 +138,11 @@ passport.use(new GoogleStrategy({
   callbackURL: "http://localhost:5000/auth/google/callback"
 },
   function (accessToken, refreshToken, profile, done) {
-    console.log("HEREEEE!!!!")
-    console.log(profile)
+    // console.log("HEREEEE!!!!")
+    // console.log(profile)
     let email = profile?._json?.email
-    console.log("HEREEEE HEREEEEEE!!!!")
-    console.log(email)
+    // console.log("HEREEEE HEREEEEEE!!!!")
+    // console.log(email)
     if (EXCEPTIONS.includes(email)) {
       MongoClient.connect(url, function (err, client) {
         const db = client.db(dbName)
@@ -190,7 +190,7 @@ const mockMiddleware = (req, _, next) => {
   next();
 };
 
-const shouldMockAuthentication = false;
+var shouldMockAuthentication = false;
 
 if(shouldMockAuthentication){
   app.use(mockMiddleware)
@@ -250,6 +250,47 @@ const getRoomData = async room => {
 }
 
 
+function joinRoom (result, email, Lions, Rooms, socket) {
+  let from = result.location
+  console.log("TESTTTTTT!!!!!!")
+  console.log("Joining " + from)
+  socket.join(from)
+  Lions[email] = new Lion(socket, from, [50, 50])
+  Rooms[from].add(email)
+  console.log(Rooms)
+  return from
+  
+};
+
+function moveRoom (room, email, Lions, Rooms, socket){
+  let from = Lions[email].room
+  let to = room
+  console.log("Updating location for ", email, from, to)
+  socket.leave(from)
+  Rooms[from].delete(email)
+  socket.join(to)
+  Rooms[to].add(email)
+  Lions[email].room = to
+  console.log(Lions[email])
+  return [from, to]
+};
+
+function validLocation (location) {
+  if (location.length !== 2){
+    return false
+  }
+  if (location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100){
+    return false
+  }
+  return true
+};
+
+// module.exports = joinRoom;
+
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom};
+
+// module.exports = moveRoom;
+
 io.on('connection', async socket => {              
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
@@ -257,12 +298,7 @@ io.on('connection', async socket => {
     const db = client.db(dbName)
     const usersCol = db.collection('users')
     usersCol.findOne({ email }, async (err, result) => {
-      let from = result.location
-      console.log("Joining " + from)
-      socket.join(from)
-      Lions[email] = new Lion(socket, from, [50, 50])
-      Rooms[from].add(email)
-      console.log(Rooms)
+      let from = joinRoom(result,email, Lions, Rooms, socket)
       io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
         let { location } = Lions[email]
         return { email, location }
@@ -281,15 +317,9 @@ io.on('connection', async socket => {
         usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
           // console.log(err, result)
           client.close()
-          let from = Lions[email].room
-          let to = room
-          console.log("Updating location for ", email, from, to)
-          socket.leave(from)
-          Rooms[from].delete(email)
-          socket.join(to)
-          Rooms[to].add(email)
-          Lions[email].room = to
-          console.log(Lions[email])
+          let dir = moveRoom(room, email, Lions, Rooms, socket)
+          let from = dir[0]
+          let to = dir[1]
           if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
             let { location } = Lions[email]
             return { email, location }
@@ -316,7 +346,7 @@ io.on('connection', async socket => {
       return
     }
     location = location.map(i => parseInt(i))
-    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+    if (!validLocation(location)) {
       socket.emit('error', "Invalid location")
       return
     }
@@ -364,4 +394,4 @@ io.on('connection', async socket => {
   // io.send('hi')
 })
 
-module.exports = server;
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, server:server, app:app};
