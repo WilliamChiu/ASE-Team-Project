@@ -21,6 +21,31 @@ const MongoClient = require('mongodb').MongoClient
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
 
+const https = require('https')
+
+const filter = JSON.stringify({
+  searchTerm: 'edwards'
+})
+
+const options = {
+  hostname: 'directory.columbia.edu',
+  port: 443,
+  path: '/people/search',
+  method: 'POST',
+  headers: {
+    'Content-Length': filter.length
+  }
+}
+
+const req = https.request(options, res => {
+  console.log('statusCode:', res.statusCode)
+
+  res.on('data', d => {
+    console.log('d:', d)
+    process.stdout.write(d)
+  })
+})
+
 const Lions = {}
 const Rooms = {}
 
@@ -124,6 +149,16 @@ passport.use(new GoogleStrategy({
     else if (loggedIn(email))
       done(null, false, { message: "Already logged in" })
     else {
+      req.on('error', error => {
+        console.error(error)
+      })
+      /*
+      console.log("PROFILE RESULTS:")
+      console.log(profile)
+
+      req.write(filter)
+      req.end()
+      */
       MongoClient.connect(url, function (err, client) {
         const db = client.db(dbName)
         const usersCol = db.collection('users')
@@ -249,15 +284,43 @@ io.on('connection', async socket => {
       })
     }
   })
+// -------------------------------------------> my responsibility below this line
 
+// keep this the same... such a short function anyway
   socket.on('chat', message => {
     let room = Lions[email].room
     console.log(room, email, message)
     io.to(room).emit('chat', email, message)
   })
 
+  function moveCheck(email, location, socket) {
+    if (typeof location !== "object") {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    location = location.map(i => parseInt(i))
+    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+      socket.emit('error', "Invalid location")
+      return
+    }
+    else if (!Lions[email]) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    Lions[email].location = location
+    let room = Lions?.[email]?.room
+
+    if (!room) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    console.log('moveCheck: ', email, room);
+    return {room: room, email: email, location: location}
+  }
+
   socket.on('move', async location => {
-    console.log("Moving", email, location)
+    console.log("Moving", email, location, socket)
+    /*
     if (typeof location !== "object") {
       socket.emit('error', "Invalid location")
       return
@@ -278,25 +341,78 @@ io.on('connection', async socket => {
       return
     }
     console.log(email, room)
-    io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+    */
+   let x = moveCheck(email, location, socket);
+
+   // if return is please reconnect or invalid location
+   /*
+   if (typeof x === 'string') {
+     console.log('socket error warning: ', x);
+     socket.emit('error', x);
+     return;
+   }
+   */
+
+    io.to(x.room).emit('room', await getRoomData(x.room), [...Rooms[x.room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
     }))
   })
 
-  socket.on('room', async () => {
+/*
+  function roomCheck(email, socket) {
     let room = Lions?.[email]?.room
     if (!room) {
       socket.emit('error', "Please reconnect")
       return
     }
+    
+    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+      let { location } = Lions[email]
+      return { email, location }
+    }))
+    
+  }
+*/
+
+  socket.on('room', async () => {
+    // return roomCheck(email, socket);
+    
+    let room = Lions?.[email]?.room
+    if (!room) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    
     socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
     }))
   })
+/*
+  function checkDisconnect(socket, email) {
+    console.log(`${email} disconnected`)
+    console.log('DISCONNECT BEFORE', Rooms)
+    console.log('LIONS: ', Lions, Lions['ctc2141@columbia.edu'])
+    if (Lions[email]) {
+      Rooms[Lions[email].room].delete(email)
+      delete Lions.email
+      console.log('DISCONNECT AFTER', Rooms)
+      return 1;
+    }
+    else {
+      for (let room of Rooms) {
+        if (room.has(email)) room.delete(email)
+      }
+      return 0;
+    }
+  }
+  */
 
   socket.on('disconnect', () => {
+    checkDisconnect(socket, email);
+    
+    /*
     console.log(`${email} disconnected`)
     if (Lions[email]) {
       Rooms[Lions[email].room].delete(email)
@@ -307,8 +423,27 @@ io.on('connection', async socket => {
         if (room.has(email)) room.delete(email)
       }
     }
+    */
+    
   })
   // io.send('hi')
 })
+function checkDisconnect(socket, email) {
+  console.log(`${email} disconnected`)
+  console.log('DISCONNECT BEFORE', Rooms)
+  console.log('LIONS: ', Lions, Lions['ctc2141@columbia.edu'])
+  if (Lions[email]) {
+    Rooms[Lions[email].room].delete(email)
+    delete Lions.email
+    console.log('DISCONNECT AFTER', Rooms)
+    return 1;
+  }
+  else {
+    for (let room of Rooms) {
+      if (room.has(email)) room.delete(email)
+    }
+    return 0;
+  }
+}
 
 module.exports = server;
