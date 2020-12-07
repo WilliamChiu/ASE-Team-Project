@@ -135,14 +135,14 @@ const { Socket } = require('socket.io');
 // const Rooms = {}
 // const {shouldMockAuthentication} = require('./app.js/shouldMockAuthentication')
 
-describe("Test the server routes", () => {
-  test("check the authentication route (redirect)", async () => {
-    var {shouldMockAuthentication} = require('./app')
-    shouldMockAuthentication = true;
-    const response = await request(app).get('/auth/google');
-    expect(response.statusCode).toBe(302);
-  });
-});
+// describe("Test the server routes", () => {
+//   test("check the authentication route (redirect)", async () => {
+//     var {shouldMockAuthentication} = require('./app')
+//     shouldMockAuthentication = true;
+//     const response = await request(app).get('/auth/google');
+//     expect(response.statusCode).toBe(302);
+//   });
+// });
 
 describe("Test valid location on the grid", () =>{
   test("check valid move", async () => {
@@ -209,9 +209,36 @@ describe("Test valid loged in", () =>{
 });
 
 const {server} = require('./app') 
-const {moveRoom} = require('./app')
-describe("Test move room", () =>{
-  test("check valid move", async () => {
+// describe("Test move room", () =>{
+//   test("check valid move", async () => {
+//     Lions["pdp2122@columbia.edu"] = {
+//       socket: {
+//         id: '8XzPSRzYigbJsLh9AAAD',
+//         connected: true,
+//         disconnected: false
+//       },
+//       room: 'Fayerweather',
+//       location: [ 84, 50 ]
+//     }
+//     const io = require('socket.io')(server, {
+//       cors: {
+//         origin: "http://localhost:3000",
+//         methods: ["GET", "POST"],
+//         credentials: true
+//       },
+//       maxHttpBufferSize: 1e4
+//     })
+//     var dir = []
+    
+//     io.join("Avery")
+
+//   });
+// });
+
+describe("Test join room", () =>{
+  test("check if a room is joined", async done => {
+    const {joinRoom} = require('./app')
+    Rooms["Avery"] = new Set()
     Lions["pdp2122@columbia.edu"] = {
       socket: {
         id: '8XzPSRzYigbJsLh9AAAD',
@@ -223,16 +250,62 @@ describe("Test move room", () =>{
     }
     const io = require('socket.io')(server, {
       cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"],
-        credentials: true
+        origin: "http://localhost:6000",
+        methods: ["GET", "POST"]
       },
       maxHttpBufferSize: 1e4
     })
-    io.on('connection', async socket => {  
-      let dir = moveRoom("Avery", "pdp2122@columbia.edu", Lions, Rooms, socket)
-      expect(dir[0]).toBe("Fayerweather")
 
+    const result = {
+      location: "Avery"
+    }
+
+    io.on('connection', async socket => {  
+      let from = joinRoom( result, "pdp2122@columbia.edu", Lions, Rooms, socket)
+      //expect("test").toBe("not test")
+      expect(from).toBe("Avery")
+      done()
     });
+
+    io.listen(6000)
+
+    require('socket.io-client')('http://localhost:6000');
+  });
+});
+
+describe("Test change room", () =>{
+  test("check if a move from room to room happens", async done => {
+    const {moveRoom} = require('./app')
+    Rooms["Avery"] = new Set()
+    Rooms["Fayerweather"] = new Set()
+    Rooms["Fayerweather"].add("pdp2122@columbia.edu")
+    Lions["pdp2122@columbia.edu"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
+    const io = require('socket.io')(server, {
+      cors: {
+        origin: "http://localhost:7000",
+        methods: ["GET", "POST"]
+      },
+      maxHttpBufferSize: 1e4
+    })
+
+    io.on('connection', async socket => {  
+      let dir = moveRoom( "Avery", "pdp2122@columbia.edu", Lions, Rooms, socket)
+      //expect("test").toBe("not test")
+      expect(dir.length).toBe(2)
+      expect(dir[0]).toBe("Fayerweather")
+      expect(dir[1]).toBe("Avery")
+      done()
+    });
+    io.listen(7000)
+
+    require('socket.io-client')('http://localhost:7000');
   });
 });

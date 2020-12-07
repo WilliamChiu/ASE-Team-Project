@@ -320,8 +320,8 @@ io.on('connection', async socket => {
           // console.log(err, result)
           client.close()
           let dir = moveRoom(room, email, Lions, Rooms, socket)
-          let from = dir[0]
-          let to = dir[1]
+            let from = dir[0]
+            let to = dir[1]
           if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
             let { location } = Lions[email]
             return { email, location }
