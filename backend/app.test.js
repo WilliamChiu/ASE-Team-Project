@@ -110,7 +110,7 @@ const profile_mock = {
 const request = require("supertest");
 const express = require('express')
 const session = require('express-session')
-const {app} = require('./app')
+const { Socket } = require('socket.io');
 // const server = require('http').createServer(app)
 // const bodyParser = require('body-parser')
 // const io = require('socket.io')(server, {
@@ -153,57 +153,86 @@ describe("Test valid location on the grid", () =>{
   });
 });
 
-// describe("Test the web sockets", () => {
-//   test("Check socket connection", async () => {
-//     const ws = new WebSocket(`ws://localhost:5000`)
-//             .on('connection', (msg) => {
-//                 expect(JSON.parse(msg).id).toEqual(0);
-//                 ws.close();
-//             })
-//             .on('close', () => done());
-//   });
+//const test = new Socket();
 
-// describe("Test passport mocking", () =>{
-//   test("Test authentication", async () =>{
-//     passport.authenticate = jest.fn((authType, options, callback) => () => { callback('This is an error', null); });
-//     const response = await request(app).get('/auth/google', passport.authenticate);
-//     expect(response.statusCode).toBe(302);
-//   });
-// });
+describe("Test valid location on the grid", () =>{
+  test("check valid move", async () => {
+    const { validLocation } = require('./app')
+    locations = [50,50]
+    const valid = validLocation(locations)
+    expect(valid).toBe(true)
+  });
 
-// describe("Test the web sockets", () => {
-//   test("Check socket connection", async () => {
-//     const ws = new WebSocket(`ws://localhost:5000`)
-//             .on('connection', (msg) => {
-//                 expect(JSON.parse(msg).id).toEqual(0);
-//                 ws.close();
-//             })
-//             .on('close', () => done());
-//   });
+  test("check invalid out of bound move (negative)", async () =>{
+    const { validLocation } = require('./app')
+    locations = [-50,50]
+    const invalid = validLocation(locations)
+    expect(invalid).toBe(false)
+  });
 
-// beforeEach(() => {
-//   mockResponse = () => {
-//     const response = {};
-//     response.status = jest.fn().mockReturnValue(response);
-//     response.json = jest.fn().mockReturnValue(response);
-//     response.sendStatus = jest.fn().mockReturnValue(response);
-//     response.clearCookie = jest.fn().mockReturnValue(response);
-//     response.cookie = jest.fn().mockReturnValue(response);
-//     return response;
-//   };
-// });
+  test("check invalid out of bound move (over 100)", async () =>{
+    const { validLocation } = require('./app')
+    locations = [50,150]
+    const invalid = validLocation(locations)
+    expect(invalid).toBe(false)
+  });
+});
 
-// describe("Test passport", () => {
-//   beforeEach(() => {
-//     req = {};
+const {Lions} = require('./app')
+const {Rooms} = require('./app')
+describe("Test valid loged in", () =>{
 
-//     res = mockResponse();
+  test("check valid socket connection", async () => {
+    Lions["pdp2122@columbia.edu"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
+    const {loggedIn} = require('./app')
+    const valid = loggedIn("pdp2122@columbia.edu")
+    expect(valid).toBe(true)
 
-//     validateLoginForm.mockClear();
-//     bcrypt.compare.mockClear();
-//   });
+  });
 
-//   test("check the authentication route (redirect)", async () => {
-//     const response = await request(app).get('/auth/google');
-//     expect(response.statusCode).toBe(302);
-//   });
+  test("check invalid socket connection", async () => {
+    const {loggedIn} = require('./app')
+    const invalid = loggedIn("phamdoanphu@gmail.com")
+    expect(invalid).toBe(false)
+
+  });
+
+
+});
+
+const {server} = require('./app') 
+const {moveRoom} = require('./app')
+describe("Test move room", () =>{
+  test("check valid move", async () => {
+    Lions["pdp2122@columbia.edu"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
+    const io = require('socket.io')(server, {
+      cors: {
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"],
+        credentials: true
+      },
+      maxHttpBufferSize: 1e4
+    })
+    io.on('connection', async socket => {  
+      let dir = moveRoom("Avery", "pdp2122@columbia.edu", Lions, Rooms, socket)
+      expect(dir[0]).toBe("Fayerweather")
+
+    });
+  });
+});

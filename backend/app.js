@@ -121,6 +121,8 @@ class Lion {
 }
 
 function loggedIn(email) {
+  console.log("PHUUUU!!!")
+  console.log(Lions)
   return Lions?.[email]?.socket.connected ? true : false
 }
 
@@ -252,7 +254,7 @@ const getRoomData = async room => {
 
 function joinRoom (result, email, Lions, Rooms, socket) {
   let from = result.location
-  console.log("TESTTTTTT!!!!!!")
+  //console.log("TESTTTTTT!!!!!!")
   console.log("Joining " + from)
   socket.join(from)
   Lions[email] = new Lion(socket, from, [50, 50])
@@ -394,4 +396,4 @@ io.on('connection', async socket => {
   // io.send('hi')
 })
 
-module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, server:server, app:app};
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, io:io, Lions:Lions, Rooms: Rooms, server:server, app:app};
