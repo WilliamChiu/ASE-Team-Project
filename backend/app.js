@@ -85,6 +85,8 @@ class Lion {
 }
 
 function loggedIn(email) {
+  console.log("PHUUUU!!!")
+  console.log(Lions)
   return Lions?.[email]?.socket.connected ? true : false
 }
 
@@ -96,54 +98,63 @@ passport.deserializeUser(function (obj, cb) {
   cb(null, obj)
 })
 
+function passport_callback (accessToken, refreshToken, profile, done){
+  let email = profile?._json?.email
+  // console.log("HEREEEE HEREEEEEE!!!!")
+  // console.log(email)
+  // if (EXCEPTIONS.includes(email)) {
+  //   MongoClient.connect(url, function (err, client) {
+  //     const db = client.db(dbName)
+  //     const usersCol = db.collection('users')
+  //     usersCol.findOne({ email }, (err, result) => {
+  //       if (!result) {
+  //         usersCol.insertOne({ email, location: "Butler" }, err => {
+  //           if (err) console.log(err)
+  //         })
+  //       }
+  //     })
+  //   })
+  //   return done(null, profile)
+  // }
+  if (!email)
+    done(null, false, { message: "Not a Columbia/Barnard email" })
+  else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
+    done(null, false, { message: "Not a Columbia/Barnard email" })
+  else if (loggedIn(email))
+    done(null, false, { message: "Already logged in" })
+  else {
+    MongoClient.connect(url, function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.findOne({ email }, (err, result) => {
+        if (!result) {
+          usersCol.insertOne({ email, location: "Butler" }, err => {
+            if (err) console.log(err)
+          })
+        }
+      })
+    })
+    return done(null, profile)
+  }
+}
+
+
 passport.use(new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: "http://localhost:5000/auth/google/callback"
 },
   function (accessToken, refreshToken, profile, done) {
-    let email = profile?._json?.email
-    if (EXCEPTIONS.includes(email)) {
-      MongoClient.connect(url, function (err, client) {
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.findOne({ email }, (err, result) => {
-          if (!result) {
-            usersCol.insertOne({ email, location: "Butler" }, err => {
-              if (err) console.log(err)
-            })
-          }
-        })
-      })
-      return done(null, profile)
-    }
-    if (!email)
-      done(null, false, { message: "Not a Columbia/Barnard email" })
-    else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
-      done(null, false, { message: "Not a Columbia/Barnard email" })
-    else if (loggedIn(email))
-      done(null, false, { message: "Already logged in" })
-    else {
-      MongoClient.connect(url, function (err, client) {
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.findOne({ email }, (err, result) => {
-          if (!result) {
-            usersCol.insertOne({ email, location: "Butler" }, err => {
-              if (err) console.log(err)
-            })
-          }
-        })
-      })
-      return done(null, profile)
-    }
+    passport_callback (accessToken, refreshToken, profile, done)
   }
 ))
 
 app.use(bodyParser.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 const sessionMiddleware = session({ secret: 'keyboard cat', resave: false, saveUninitialized: true })
+
 app.use(sessionMiddleware)
+
 app.use(passport.initialize())
 app.use(passport.session())
 
@@ -196,6 +207,80 @@ const getRoomData = async room => {
 }
 
 
+function joinRoom (result, email, Lions, Rooms, socket) {
+  let from = result.location
+  //console.log("TESTTTTTT!!!!!!")
+  console.log("Joining " + from)
+  socket.join(from)
+  Lions[email] = new Lion(socket, from, [50, 50])
+  Rooms[from].add(email)
+  console.log(Rooms)
+  return from
+  
+};
+
+function moveRoom (room, email, Lions, Rooms, socket){
+  let from = Lions[email].room
+  let to = room
+  console.log("Updating location for ", email, from, to)
+  socket.leave(from)
+  Rooms[from].delete(email)
+  socket.join(to)
+  Rooms[to].add(email)
+  Lions[email].room = to
+  console.log(Lions[email])
+  return [from, to]
+};
+
+function validLocation (location) {
+  if (location.length !== 2){
+    return false
+  }
+  if (location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100){
+    return false
+  }
+  return true
+};
+
+function invalidRoomMsg (room, socket){
+  if (!room) {
+    socket.emit('error', "Please reconnect")
+    return
+  }
+}
+
+function changeRoomCallback(Rooms,room,email, socket) {
+  if (Rooms[room]) {
+    MongoClient.connect(url, function (err, client) {
+      // console.log(client)
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
+        // console.log(err, result)
+        client.close()
+        let dir = moveRoom(room, email, Lions, Rooms, socket)
+          let from = dir[0]
+          let to = dir[1]
+        if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+        if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+      })
+    })
+  }
+}
+
+
+// module.exports = joinRoom;
+
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom};
+
+// module.exports = moveRoom;
+
 io.on('connection', async socket => {              
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
@@ -203,12 +288,7 @@ io.on('connection', async socket => {
     const db = client.db(dbName)
     const usersCol = db.collection('users')
     usersCol.findOne({ email }, async (err, result) => {
-      let from = result.location
-      console.log("Joining " + from)
-      socket.join(from)
-      Lions[email] = new Lion(socket, from, [50, 50])
-      Rooms[from].add(email)
-      console.log(Rooms)
+      let from = joinRoom(result,email, Lions, Rooms, socket)
       io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
         let { location } = Lions[email]
         return { email, location }
@@ -219,33 +299,7 @@ io.on('connection', async socket => {
   }))
 
   socket.on('changeRoom', room => {
-    if (Rooms[room]) {
-      MongoClient.connect(url, function (err, client) {
-        // console.log(client)
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
-          // console.log(err, result)
-          client.close()
-          let from = Lions[email].room
-          let to = room
-          console.log("Updating location for ", email, from, to)
-          socket.leave(from)
-          Rooms[from].delete(email)
-          socket.join(to)
-          Rooms[to].add(email)
-          Lions[email].room = to
-          if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-            let { location } = Lions[email]
-            return { email, location }
-          }))
-          if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-            let { location } = Lions[email]
-            return { email, location }
-          }))
-        })
-      })
-    }
+    changeRoomCallback(Rooms, room,email, socket)
   })
 
   socket.on('chat', message => {
@@ -261,7 +315,7 @@ io.on('connection', async socket => {
       return
     }
     location = location.map(i => parseInt(i))
-    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+    if (!validLocation(location)) {
       socket.emit('error', "Invalid location")
       return
     }
@@ -271,10 +325,7 @@ io.on('connection', async socket => {
     }
     Lions[email].location = location
     let room = Lions?.[email]?.room
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
+    invalidRoomMsg (room, socket)
     console.log(email, room)
     io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
@@ -284,10 +335,7 @@ io.on('connection', async socket => {
 
   socket.on('room', async () => {
     let room = Lions?.[email]?.room
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
+    invalidRoomMsg (room, socket)
     socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
@@ -309,4 +357,6 @@ io.on('connection', async socket => {
   // io.send('hi')
 })
 
-module.exports = server;
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
+  changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback, io:io, Lions:Lions, Rooms: Rooms, 
+  server:server, app:app};
