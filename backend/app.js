@@ -293,31 +293,6 @@ io.on('connection', async socket => {
     io.to(room).emit('chat', email, message)
   })
 
-  function moveCheck(email, location, socket) {
-    if (typeof location !== "object") {
-      socket.emit('error', "Invalid location")
-      return
-    }
-    location = location.map(i => parseInt(i))
-    if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
-      socket.emit('error', "Invalid location")
-      return
-    }
-    else if (!Lions[email]) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
-    Lions[email].location = location
-    let room = Lions?.[email]?.room
-
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
-    console.log('moveCheck: ', email, room);
-    return {room: room, email: email, location: location}
-  }
-
   socket.on('move', async location => {
     console.log("Moving", email, location, socket)
     /*
@@ -389,61 +364,63 @@ io.on('connection', async socket => {
       return { email, location }
     }))
   })
-/*
-  function checkDisconnect(socket, email) {
-    console.log(`${email} disconnected`)
-    console.log('DISCONNECT BEFORE', Rooms)
-    console.log('LIONS: ', Lions, Lions['ctc2141@columbia.edu'])
-    if (Lions[email]) {
-      Rooms[Lions[email].room].delete(email)
-      delete Lions.email
-      console.log('DISCONNECT AFTER', Rooms)
-      return 1;
-    }
-    else {
-      for (let room of Rooms) {
-        if (room.has(email)) room.delete(email)
-      }
-      return 0;
-    }
-  }
-  */
+
 
   socket.on('disconnect', () => {
     checkDisconnect(socket, email);
-    
-    /*
-    console.log(`${email} disconnected`)
-    if (Lions[email]) {
-      Rooms[Lions[email].room].delete(email)
-      delete Lions.email
-    }
-    else {
-      for (let room of Rooms) {
-        if (room.has(email)) room.delete(email)
-      }
-    }
-    */
-    
   })
   // io.send('hi')
 })
+
+
 function checkDisconnect(socket, email) {
   console.log(`${email} disconnected`)
   console.log('DISCONNECT BEFORE', Rooms)
-  console.log('LIONS: ', Lions, Lions['ctc2141@columbia.edu'])
+  console.log('Lions: ', Lions)
   if (Lions[email]) {
+    console.log('blah blah: ', Rooms[Lions[email].room])
     Rooms[Lions[email].room].delete(email)
     delete Lions.email
     console.log('DISCONNECT AFTER', Rooms)
     return 1;
   }
   else {
-    for (let room of Rooms) {
-      if (room.has(email)) room.delete(email)
+    for (let room in Rooms) {
+      if (Rooms[room]) {
+       delete room.email;
+      }
     }
     return 0;
   }
 }
 
-module.exports = server;
+function moveCheck(email, location, socket) {
+  if (typeof location !== "object") {
+    socket.emit('error', "Invalid location")
+    return
+  }
+
+  location = location.map(i => parseInt(i))
+  if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+    console.log('2ND ERROR LOCATION')
+    socket.emit('error', "Invalid location")
+    return
+  }
+  else if (!Lions[email]) {
+    socket.emit('error', "Please reconnect")
+    return
+  }
+  Lions[email].location = location
+  let room = Lions?.[email]?.room
+
+  if (!room) {
+    console.log('NO ROOM!')
+    socket.emit('error', "Please reconnect")
+    return
+  }
+  console.log('moveCheck: ', email, room);
+  return {room: room, email: email, location: location}
+}
+
+module.exports = {server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck};
+// module.exports = server;
