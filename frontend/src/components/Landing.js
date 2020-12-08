@@ -18,6 +18,7 @@ function Landing(props) {
     const [chat, setChat] = useState([])
     const [message, setMessage] = useState('')
     const [prevMoved, setPrevMoved] = useState(false)
+    const [logs, setLogs] = useState([])
 
     const chatRef = useRef(null)
     chatRef.current = chat
@@ -34,6 +35,9 @@ function Landing(props) {
         console.log(newChat)
         if (newChat.length !== chatRef.current.length) {
             console.log("setting new chat", newChat, chatRef.current)
+            console.log("HERE ARE NEW MSG", chatRef.current[0].message)
+            setLogs(logs.concat([[chatRef.current[0].message, chatRef.current[0].email]]))
+            console.log("Props REF", props)
             setChat(newChat)
         }
     }
@@ -63,6 +67,19 @@ function Landing(props) {
         }
     }, [chat, room, participants])
 
+    /*
+    function ChatList(props) {
+        const logsItems = props.map((log, index) =>
+        <li>
+            sup
+        </li>
+        );
+        return (
+        <ul>{logsItems}</ul>
+        );
+    }
+    */
+
     const handleMessage = e => {
         setMessage(e.target.value)
     }
@@ -73,6 +90,12 @@ function Landing(props) {
     }
     const changeRoom = room => {
         socket.emit('changeRoom', room)
+    }
+
+    const logsAdjust = () => {
+        if (logs.length > 4) {
+            setLogs(logs.slice(logs.length-4))
+        }
     }
 
     console.log(participants.length)
@@ -198,9 +221,10 @@ function Landing(props) {
                                     fontSize: 20,
                                     wordWrap: true,
                                     wordWrapWidth: 440,
-                                    dropShadow: true,
                                     fill: "white",
                                     padding: 10,
+                                    stroke: "black",
+                                    strokeThickness: 6,
                                 })
                             }
                             text={props.displayName}
@@ -210,6 +234,9 @@ function Landing(props) {
                 {
                     chat.map((c, i) => {
                         let location = getLocation(participants, c.email)
+                        // setLogs(logs.concat(c.message))
+                        // console.log("TEST!!!!!!")
+                        // console.log(logs)
                         return <Text
                             id={`chat${i}`}
                             anchor={0.5}
@@ -222,9 +249,10 @@ function Landing(props) {
                                     fontSize: 20,
                                     wordWrap: true,
                                     wordWrapWidth: 440,
-                                    dropShadow: true,
                                     fill: "white",
                                     padding: 10,
+                                    stroke: "black",
+                                    strokeThickness: 6,
                                 })
                             }
                             color={"white"}
@@ -237,6 +265,13 @@ function Landing(props) {
             <div className="userInfo" style={{ position: 'absolute', right: '20px', top: '20px' }}>
                 <span style={{ paddingRight: "10px" }}>Welcome {props.displayName}</span>
                 <img src={props.photos[0].value} alt="User" style={{ width: "50px", borderRadius: "50%" }} />
+            </div>
+            <div className="chatlog">
+                <h2> Chat Log: </h2>
+                {logsAdjust()}
+                {logs.map((log, index) => (
+                    <p> {log[1]} said: {log[0]} </p>
+                ))}
             </div>
             <div className="chat">
                 <form onSubmit={sendMessage}>

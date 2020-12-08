@@ -21,6 +21,31 @@ const MongoClient = require('mongodb').MongoClient
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
 
+const https = require('https')
+
+const filter = JSON.stringify({
+  searchTerm: 'edwards'
+})
+
+const options = {
+  hostname: 'directory.columbia.edu',
+  port: 443,
+  path: '/people/search',
+  method: 'POST',
+  headers: {
+    'Content-Length': filter.length
+  }
+}
+
+const req = https.request(options, res => {
+  console.log('statusCode:', res.statusCode)
+
+  res.on('data', d => {
+    console.log('d:', d)
+    process.stdout.write(d)
+  })
+})
+
 const Lions = {}
 const Rooms = {}
 
@@ -301,7 +326,9 @@ io.on('connection', async socket => {
   socket.on('changeRoom', room => {
     changeRoomCallback(Rooms, room,email, socket)
   })
+// -------------------------------------------> my responsibility below this line
 
+// keep this the same... such a short function anyway
   socket.on('chat', message => {
     let room = Lions[email].room
     console.log(room, email, message)
@@ -309,7 +336,8 @@ io.on('connection', async socket => {
   })
 
   socket.on('move', async location => {
-    console.log("Moving", email, location)
+    console.log("Moving", email, location, socket)
+    /*
     if (typeof location !== "object") {
       socket.emit('error', "Invalid location")
       return
@@ -327,13 +355,43 @@ io.on('connection', async socket => {
     let room = Lions?.[email]?.room
     invalidRoomMsg (room, socket)
     console.log(email, room)
-    io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+    */
+   let x = moveCheck(email, location, socket);
+
+   // if return is please reconnect or invalid location
+   /*
+   if (typeof x === 'string') {
+     console.log('socket error warning: ', x);
+     socket.emit('error', x);
+     return;
+   }
+   */
+
+    io.to(x.room).emit('room', await getRoomData(x.room), [...Rooms[x.room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
     }))
   })
 
+/*
+  function roomCheck(email, socket) {
+    let room = Lions?.[email]?.room
+    if (!room) {
+      socket.emit('error', "Please reconnect")
+      return
+    }
+    
+    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
+      let { location } = Lions[email]
+      return { email, location }
+    }))
+    
+  }
+*/
+
   socket.on('room', async () => {
+    // return roomCheck(email, socket);
+    
     let room = Lions?.[email]?.room
     invalidRoomMsg (room, socket)
     socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
@@ -342,21 +400,63 @@ io.on('connection', async socket => {
     }))
   })
 
+
   socket.on('disconnect', () => {
-    console.log(`${email} disconnected`)
-    if (Lions[email]) {
-      Rooms[Lions[email].room].delete(email)
-      delete Lions.email
-    }
-    else {
-      for (let room of Rooms) {
-        if (room.has(email)) room.delete(email)
-      }
-    }
+    checkDisconnect(socket, email);
   })
   // io.send('hi')
 })
 
-module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
-  changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback, io:io, Lions:Lions, Rooms: Rooms, 
-  server:server, app:app};
+function checkDisconnect(socket, email) {
+  console.log(`${email} disconnected`)
+  console.log('DISCONNECT BEFORE', Rooms)
+  console.log('Lions: ', Lions)
+  if (Lions[email]) {
+    console.log('blah blah: ', Rooms[Lions[email].room])
+    Rooms[Lions[email].room].delete(email)
+    delete Lions.email
+    console.log('DISCONNECT AFTER', Rooms)
+    return 1;
+  }
+  else {
+    for (let room in Rooms) {
+      if (Rooms[room]) {
+       delete room.email;
+      }
+    }
+    return 0;
+  }
+}
+
+function moveCheck(email, location, socket) {
+  if (typeof location !== "object") {
+    socket.emit('error', "Invalid location")
+    return
+  }
+
+  location = location.map(i => parseInt(i))
+  if (location.length !== 2 || location[0] < 0 || location[0] > 100 || location[1] < 0 || location[1] > 100) {
+    console.log('2ND ERROR LOCATION')
+    socket.emit('error', "Invalid location")
+    return
+  }
+  else if (!Lions[email]) {
+    socket.emit('error', "Please reconnect")
+    return
+  }
+  Lions[email].location = location
+  let room = Lions?.[email]?.room
+
+  if (!room) {
+    console.log('NO ROOM!')
+    socket.emit('error', "Please reconnect")
+    return
+  }
+  console.log('moveCheck: ', email, room);
+  return {room: room, email: email, location: location}
+}
+
+module.exports = {server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck,
+validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
+changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback};
+// module.exports = server;
