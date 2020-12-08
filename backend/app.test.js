@@ -73,27 +73,6 @@ describe("Test the web sockets", () => {
 
 //import passport from 'app';
 const profile_mock = {
-  id: '104656250682509765796',
-  displayName: 'Phu D Pham',
-  name: { familyName: 'Pham', givenName: 'Phu D' },
-  emails: [ { value: 'pdp2121@columbia.edu', verified: true } ],
-  photos: [
-    {
-      value: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg'
-    }
-  ],
-  provider: 'google',
-  _raw: '{\n' +
-    '  "sub": "104656250682509765796",\n' +
-    '  "name": "Phu D Pham",\n' +
-    '  "given_name": "Phu D",\n' +
-    '  "family_name": "Pham",\n' +
-    '  "picture": "https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg",\n' +
-    '  "email": "pdp2121@columbia.edu",\n' +
-    '  "email_verified": true,\n' +
-    '  "locale": "en",\n' +
-    '  "hd": "columbia.edu"\n' +
-    '}',
   _json: {
     sub: '104656250682509765796',
     name: 'Phu D Pham',
@@ -173,6 +152,13 @@ describe("Test valid location on the grid", () =>{
   test("check invalid out of bound move (over 100)", async () =>{
     const { validLocation } = require('./app')
     locations = [50,150]
+    const invalid = validLocation(locations)
+    expect(invalid).toBe(false)
+  });
+
+  test("check invalid location input", async () =>{
+    const { validLocation } = require('./app')
+    locations = [50]
     const invalid = validLocation(locations)
     expect(invalid).toBe(false)
   });
@@ -307,5 +293,238 @@ describe("Test change room", () =>{
     io.listen(7000)
 
     require('socket.io-client')('http://localhost:7000');
+  });
+});
+
+describe("Test invalid room message", () =>{
+  test("check socket notice an invalid room", async done => {
+    const {invalidRoomMsg} = require("./app")
+    const io = require('socket.io')(server, {
+      cors: {
+        origin: "http://localhost:8000",
+        methods: ["GET", "POST"]
+      },
+      maxHttpBufferSize: 1e4
+    })
+
+    io.on('connection', async socket => {
+      socket.on("error", (message) =>{
+        expect("test").toBe("not test")
+        expect(message).toBe("Please reconnect")
+      })
+      invalidRoomMsg(null, socket)
+      
+      done()
+    });
+    io.listen(8000)
+
+    require('socket.io-client')('http://localhost:8000');
+  });
+});
+
+const MongoClient = require('mongodb').MongoClient 
+const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
+
+
+describe("Test initialization of database", () => {
+  test("check if the database has been initialized", async () =>{
+    const {initRooms} = require('./app')
+    const temp = initRooms()
+    expect(1).toBe(1)
+  });
+});
+
+describe("Test change room callback", () =>{
+  test("check if a move from room to room callback happens", async done => {
+    const {changeRoomCallback} = require('./app')
+    Rooms["Avery"] = new Set()
+    Rooms["Fayerweather"] = new Set()
+    Rooms["Avery"].add("pdp2122@columbia.edu")
+    Lions["pdp2122@columbia.edu"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
+    const io = require('socket.io')(server, {
+      cors: {
+        origin: "http://localhost:9000",
+        methods: ["GET", "POST"]
+      },
+      maxHttpBufferSize: 1e4
+    })
+
+    io.on('connection', async socket => {
+      Rooms["Avery"] = new Set()
+      Rooms["Fayerweather"] = new Set()
+      Rooms["Avery"].add("pdp2122@columbia.edu")
+      changeRoomCallback(Rooms, "Avery", "pdp2122@columbia.edu", socket)
+      done()
+    });
+    io.listen(9000)
+
+    require('socket.io-client')('http://localhost:9000');
+  });
+});
+
+describe("Test initialization of mongodb", () => {
+  test("check if the mongoDb database has been initialized", async () =>{
+    MongoClient.connect(url, async(err, client) => {})
+  });
+});
+
+const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+const passport = require('passport')
+
+describe("Test passport", () => {
+  test("check valid email credentials", async () =>{
+    const {passport_callback} = require('./app')
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: 'pdp2121@columbia.edu',
+        email_verified: true,
+        locale: 'en',
+        hd: 'columbia.edu'
+      }
+    }
+
+    function done(err, user, info) {
+      if (err) { return self.error(err); }
+      if (!user) { return self.fail(info); }
+      return {user, info}
+    }
+
+    temp = passport_callback('','', profile_mock, done)
+    expect(temp).toBeDefined()
+  });
+
+  test("check invalid email credentials (not columbia)", async () =>{
+    const {passport_callback} = require('./app')
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: 'test@example.com',
+        email_verified: true,
+        locale: 'en',
+        hd: 'example.com'
+      }
+    }
+
+    function done(err, user, info) {
+      if (err) { return self.error(err); }
+      if (!user) { return info; }
+      return {user, info}
+    }
+
+    temp = passport_callback('','', profile_mock, done)
+    expect(temp).toBeUndefined()
+  });
+
+  test("check invalid email credentials (empty)", async () =>{
+    const {passport_callback} = require('./app')
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: '',
+        email_verified: true,
+        locale: 'en',
+        hd: ''
+      }
+    }
+
+    function done(err, user, info) {
+      if (err) { return self.error(err); }
+      if (!user) { return info; }
+      return {user, info}
+    }
+
+    temp = passport_callback('','', profile_mock, done)
+    expect(temp).toBeUndefined()
+  });
+
+  test("check already logged in", async () =>{
+    const {passport_callback} = require('./app')
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: 'pdp2121@columbia.edu',
+        email_verified: true,
+        locale: 'en',
+        hd: 'columbia.edu'
+      }
+    }
+
+    Lions["pdp2121@columbia.edu"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
+
+
+
+    function done(err, user, info) {
+      if (err) { return self.error(err); }
+      if (!user) { return info; }
+      return {user, info}
+    }
+
+    temp = passport_callback('','', profile_mock, done)
+    expect(temp).toBeUndefined()
+  });
+
+  test("check log in exception", async () =>{
+    const {passport_callback} = require('./app')
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: 'test@example.com',
+        email_verified: true,
+        locale: 'en',
+        hd: 'example.com'
+      }
+    }
+
+    const EXCEPTIONS = ["test@example.com"]
+
+
+
+    function done(err, user, info) {
+      if (err) { return self.error(err); }
+      if (!user) { return info; }
+      return {user, info}
+    }
+
+    temp = passport_callback('','', profile_mock, done)
+    expect(temp).toBeUndefined()
   });
 });

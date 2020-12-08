@@ -26,42 +26,6 @@ const Rooms = {}
 
 const EXCEPTIONS = ["williamchiu16@gmail.com", "william.chiu16@gmail.com"]
 
-
-const profile_mock = {
-  id: '104656250682509765796',
-  displayName: 'Phu D Pham',
-  name: { familyName: 'Pham', givenName: 'Phu D' },
-  emails: [ { value: 'pdp2121@columbia.edu', verified: true } ],
-  photos: [
-    {
-      value: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg'
-    }
-  ],
-  provider: 'google',
-  _raw: '{\n' +
-    '  "sub": "104656250682509765796",\n' +
-    '  "name": "Phu D Pham",\n' +
-    '  "given_name": "Phu D",\n' +
-    '  "family_name": "Pham",\n' +
-    '  "picture": "https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg",\n' +
-    '  "email": "pdp2121@columbia.edu",\n' +
-    '  "email_verified": true,\n' +
-    '  "locale": "en",\n' +
-    '  "hd": "columbia.edu"\n' +
-    '}',
-  _json: {
-    sub: '104656250682509765796',
-    name: 'Phu D Pham',
-    given_name: 'Phu D',
-    family_name: 'Pham',
-    picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
-    email: 'pdp2121@columbia.edu',
-    email_verified: true,
-    locale: 'en',
-    hd: 'columbia.edu'
-  }
-};
-
 async function initRooms() {
   let mongoOnline = false
   while (!mongoOnline) {
@@ -134,51 +98,54 @@ passport.deserializeUser(function (obj, cb) {
   cb(null, obj)
 })
 
+function passport_callback (accessToken, refreshToken, profile, done){
+  let email = profile?._json?.email
+  // console.log("HEREEEE HEREEEEEE!!!!")
+  // console.log(email)
+  // if (EXCEPTIONS.includes(email)) {
+  //   MongoClient.connect(url, function (err, client) {
+  //     const db = client.db(dbName)
+  //     const usersCol = db.collection('users')
+  //     usersCol.findOne({ email }, (err, result) => {
+  //       if (!result) {
+  //         usersCol.insertOne({ email, location: "Butler" }, err => {
+  //           if (err) console.log(err)
+  //         })
+  //       }
+  //     })
+  //   })
+  //   return done(null, profile)
+  // }
+  if (!email)
+    done(null, false, { message: "Not a Columbia/Barnard email" })
+  else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
+    done(null, false, { message: "Not a Columbia/Barnard email" })
+  else if (loggedIn(email))
+    done(null, false, { message: "Already logged in" })
+  else {
+    MongoClient.connect(url, function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.findOne({ email }, (err, result) => {
+        if (!result) {
+          usersCol.insertOne({ email, location: "Butler" }, err => {
+            if (err) console.log(err)
+          })
+        }
+      })
+    })
+    return done(null, profile)
+  }
+}
+
+
 passport.use(new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: "http://localhost:5000/auth/google/callback"
 },
   function (accessToken, refreshToken, profile, done) {
-    // console.log("HEREEEE!!!!")
-    // console.log(profile)
-    let email = profile?._json?.email
-    // console.log("HEREEEE HEREEEEEE!!!!")
-    // console.log(email)
-    if (EXCEPTIONS.includes(email)) {
-      MongoClient.connect(url, function (err, client) {
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.findOne({ email }, (err, result) => {
-          if (!result) {
-            usersCol.insertOne({ email, location: "Butler" }, err => {
-              if (err) console.log(err)
-            })
-          }
-        })
-      })
-      return done(null, profile)
-    }
-    if (!email)
-      done(null, false, { message: "Not a Columbia/Barnard email" })
-    else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
-      done(null, false, { message: "Not a Columbia/Barnard email" })
-    else if (loggedIn(email))
-      done(null, false, { message: "Already logged in" })
-    else {
-      MongoClient.connect(url, function (err, client) {
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.findOne({ email }, (err, result) => {
-          if (!result) {
-            usersCol.insertOne({ email, location: "Butler" }, err => {
-              if (err) console.log(err)
-            })
-          }
-        })
-      })
-      return done(null, profile)
-    }
+    passport_callback (accessToken, refreshToken, profile, done)
   }
 ))
 
@@ -186,19 +153,7 @@ app.use(bodyParser.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 const sessionMiddleware = session({ secret: 'keyboard cat', resave: false, saveUninitialized: true })
 
-const mockMiddleware = (req, _, next) => {
-  req.user = profile_mock;
-  req.isAuthenticated = () => true;
-  next();
-};
-
-var shouldMockAuthentication = false;
-
-if(shouldMockAuthentication){
-  app.use(mockMiddleware)
-} else{
-  app.use(sessionMiddleware)
-}
+app.use(sessionMiddleware)
 
 app.use(passport.initialize())
 app.use(passport.session())
@@ -287,6 +242,39 @@ function validLocation (location) {
   return true
 };
 
+function invalidRoomMsg (room, socket){
+  if (!room) {
+    socket.emit('error', "Please reconnect")
+    return
+  }
+}
+
+function changeRoomCallback(Rooms,room,email, socket) {
+  if (Rooms[room]) {
+    MongoClient.connect(url, function (err, client) {
+      // console.log(client)
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
+        // console.log(err, result)
+        client.close()
+        let dir = moveRoom(room, email, Lions, Rooms, socket)
+          let from = dir[0]
+          let to = dir[1]
+        if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+        if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
+          let { location } = Lions[email]
+          return { email, location }
+        }))
+      })
+    })
+  }
+}
+
+
 // module.exports = joinRoom;
 
 module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom};
@@ -311,28 +299,7 @@ io.on('connection', async socket => {
   }))
 
   socket.on('changeRoom', room => {
-    if (Rooms[room]) {
-      MongoClient.connect(url, function (err, client) {
-        // console.log(client)
-        const db = client.db(dbName)
-        const usersCol = db.collection('users')
-        usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
-          // console.log(err, result)
-          client.close()
-          let dir = moveRoom(room, email, Lions, Rooms, socket)
-            let from = dir[0]
-            let to = dir[1]
-          if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-            let { location } = Lions[email]
-            return { email, location }
-          }))
-          if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-            let { location } = Lions[email]
-            return { email, location }
-          }))
-        })
-      })
-    }
+    changeRoomCallback(Rooms, room,email, socket)
   })
 
   socket.on('chat', message => {
@@ -358,10 +325,7 @@ io.on('connection', async socket => {
     }
     Lions[email].location = location
     let room = Lions?.[email]?.room
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
+    invalidRoomMsg (room, socket)
     console.log(email, room)
     io.to(room).emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
@@ -371,10 +335,7 @@ io.on('connection', async socket => {
 
   socket.on('room', async () => {
     let room = Lions?.[email]?.room
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
+    invalidRoomMsg (room, socket)
     socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
       let { location } = Lions[email]
       return { email, location }
@@ -396,4 +357,6 @@ io.on('connection', async socket => {
   // io.send('hi')
 })
 
-module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, io:io, Lions:Lions, Rooms: Rooms, server:server, app:app};
+module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
+  changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback, io:io, Lions:Lions, Rooms: Rooms, 
+  server:server, app:app};
