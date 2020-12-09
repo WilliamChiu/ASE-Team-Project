@@ -12,7 +12,7 @@ env:
     - MONGO_PASSWORD=password
 
 before_install:
-- docker-compose up --build
+- docker-compose -f travis-docker-compose.yml up --build
 
 script:
 - docker exec -it wcj-backend npm run test -- --coverage
