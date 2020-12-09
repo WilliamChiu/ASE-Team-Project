@@ -4,6 +4,13 @@ services:
 - docker
 - mongodb
 
+env:
+  global:
+    - GOOGLE_CLIENT_ID=googleid
+    - GOOGLE_CLIENT_SECRET=googlesecret
+    - MONGO_USER=user
+    - MONGO_PASSWORD=password
+
 before_install:
 - docker-compose up --build
 
