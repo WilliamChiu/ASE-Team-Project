@@ -2,6 +2,7 @@
 MAX_TRIES=5
 
 function ready() {
+  docker-compose logs backend
   docker-compose logs backend | grep "Initializing in-memory rooms.."
 }
 
@@ -14,7 +15,7 @@ function waitUntilServiceIsReady() {
       break
     fi
     echo "Waiting for $2 container... (attempt: $((attempt++)))"
-    sleep 1m
+    sleep 10s
   done
 
   if [ $attempt -gt $MAX_TRIES ]; then
