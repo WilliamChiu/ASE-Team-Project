@@ -13,7 +13,8 @@ env:
 
 before_install:
 - sudo killall mongod
-- docker-compose -f travis-docker-compose.yml up --build
+- docker-compose -f travis-docker-compose.yml up --build -d
+- ./travis.sh
 
 script:
 - docker exec -it wcj-backend npm run test -- --coverage
