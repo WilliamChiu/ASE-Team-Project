@@ -17,61 +17,34 @@ const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
 const cors = require('cors')
+const { initialize } = require('passport')
 const MongoClient = require('mongodb').MongoClient 
 const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
 const dbName = 'roaree'
-
-const https = require('https')
-
-const filter = JSON.stringify({
-  searchTerm: 'edwards'
-})
-
-const options = {
-  hostname: 'directory.columbia.edu',
-  port: 443,
-  path: '/people/search',
-  method: 'POST',
-  headers: {
-    'Content-Length': filter.length
-  }
-}
-
-const req = https.request(options, res => {
-  console.log('statusCode:', res.statusCode)
-
-  res.on('data', d => {
-    console.log('d:', d)
-    process.stdout.write(d)
-  })
-})
 
 const Lions = {}
 const Rooms = {}
 
 const EXCEPTIONS = ["williamchiu16@gmail.com", "william.chiu16@gmail.com"]
 
-async function initRooms() {
-  let mongoOnline = false
-  while (!mongoOnline) {
-    await new Promise(r => setTimeout(r, 1000));
-    await new Promise(res => {
-      console.log("Checking Mongo...")
-      MongoClient.connect(url, async (err, client) => {
-        if (!err) {
-          mongoOnline = true
-          client.close()
-        }
-        res()
-      })
-    })
-  }
-  console.log("Inserting necessary rooms...")
-  await new Promise(res => {
-    MongoClient.connect(url, function (err, client) {
-      if (err) {
-        setTimeout(initRooms, 1000)
+async function checkMongo() {
+  await new Promise(r => setTimeout(r, 1000));
+  return new Promise(res => {
+    console.log("Checking Mongo...")
+    MongoClient.connect(url, async (err, client) => {
+      /* istanbul ignore next */ 
+      if (!err) {
+        res(true)
+        client.close()
       }
+      res(false)
+    })
+  })
+}
+
+function insertRooms() {
+  return new Promise(res => {
+    MongoClient.connect(url, function (err, client) {
       const db = client.db(dbName)
       const roomsCol = db.collection('rooms')
       roomsCol.createIndex({ room: 1 }, { unique: true })
@@ -82,9 +55,10 @@ async function initRooms() {
       })
     })
   })
-  // Initialize Rooms
-  console.log("Initializing in-memory rooms...")
-  await new Promise(res => {
+}
+
+function initializeRooms() {
+  return new Promise(res => {
     MongoClient.connect(url, async (err, client) => {
       if (err) return console.log(err);
       const db = client.db(dbName)
@@ -96,6 +70,18 @@ async function initRooms() {
       res()
     })
   })
+}
+
+async function initRooms() {
+  let mongoOnline = false
+  while (!mongoOnline) {
+    mongoOnline = await checkMongo()
+  }
+  console.log("Inserting necessary rooms...")
+  await insertRooms()
+  // Initialize Rooms
+  console.log("Initializing in-memory rooms...")
+  await initializeRooms()
 }
 
 initRooms()
@@ -110,16 +96,16 @@ class Lion {
 }
 
 function loggedIn(email) {
-  console.log("PHUUUU!!!")
-  console.log(Lions)
   return Lions?.[email]?.socket.connected ? true : false
 }
 
 passport.serializeUser(function (user, cb) {
+  /* istanbul ignore next */ 
   cb(null, user)
 })
 
 passport.deserializeUser(function (obj, cb) {
+  /* istanbul ignore next */ 
   cb(null, obj)
 })
 
@@ -155,11 +141,12 @@ function passport_callback (accessToken, refreshToken, profile, done){
         if (!result) {
           usersCol.insertOne({ email, location: "Butler" }, err => {
             if (err) console.log(err)
+            done(null, profile)
           })
         }
+        else done(null, profile)
       })
     })
-    return done(null, profile)
   }
 }
 
@@ -168,11 +155,7 @@ passport.use(new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
   callbackURL: "http://localhost:5000/auth/google/callback"
-},
-  function (accessToken, refreshToken, profile, done) {
-    passport_callback (accessToken, refreshToken, profile, done)
-  }
-))
+}, passport_callback))
 
 app.use(bodyParser.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
@@ -190,11 +173,12 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/error' }),
   function (req, res) {
     // Successful authentication, redirect success.
+    /* istanbul ignore next */
     res.redirect('http://localhost:3000')
   })
 
 app.get('/success', (req, res) => {
-  // console.log(req.user)
+  /* istanbul ignore next */
   res.send(req.user)
 })
 app.get('/error', (req, res) => res.send("error logging in"))
@@ -212,6 +196,7 @@ io.use(wrap(passport.session()))
 
 io.use((socket, next) => {
   // console.log("Socket user found: ", socket.request.user)
+  /* istanbul ignore next */
   if (socket.request.user) {
     next()
   } else {
@@ -247,13 +232,11 @@ function joinRoom (result, email, Lions, Rooms, socket) {
 function moveRoom (room, email, Lions, Rooms, socket){
   let from = Lions[email].room
   let to = room
-  console.log("Updating location for ", email, from, to)
   socket.leave(from)
   Rooms[from].delete(email)
   socket.join(to)
   Rooms[to].add(email)
   Lions[email].room = to
-  console.log(Lions[email])
   return [from, to]
 };
 
@@ -274,39 +257,8 @@ function invalidRoomMsg (room, socket){
   }
 }
 
-function changeRoomCallback(Rooms,room,email, socket) {
-  if (Rooms[room]) {
-    MongoClient.connect(url, function (err, client) {
-      // console.log(client)
-      const db = client.db(dbName)
-      const usersCol = db.collection('users')
-      usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
-        // console.log(err, result)
-        client.close()
-        let dir = moveRoom(room, email, Lions, Rooms, socket)
-          let from = dir[0]
-          let to = dir[1]
-        if (Rooms[from].size()) io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
-        if (Rooms[to].size()) io.to(to).emit('room', await getRoomData(to), [...Rooms[to]].map(email => {
-          let { location } = Lions[email]
-          return { email, location }
-        }))
-      })
-    })
-  }
-}
 
-
-// module.exports = joinRoom;
-
-module.exports = {validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom};
-
-// module.exports = moveRoom;
-
-io.on('connection', async socket => {              
+async function handleNewSocket(socket) {
   let email = socket.request.user?._json?.email
   if (loggedIn(email)) socket.disconnect(true)
   await new Promise(res => MongoClient.connect(url, function (err, client) {
@@ -314,98 +266,90 @@ io.on('connection', async socket => {
     const usersCol = db.collection('users')
     usersCol.findOne({ email }, async (err, result) => {
       let from = joinRoom(result,email, Lions, Rooms, socket)
-      io.to(from).emit('room', await getRoomData(from), [...Rooms[from]].map(email => {
-        let { location } = Lions[email]
-        return { email, location }
-      }))
+      io.to(from).emit('room', await getRoomData(from), fetchEmailLocation(from))
       client.close()
+      console.log("resing", email)
       res()
     })
   }))
+  return email
+}
+
+function fetchEmailLocation(room) {
+  return [...Rooms[room]].map(email => {
+    let { location } = Lions[email]
+    return { email, location }
+  })
+}
+
+function changeRoomCallback(Rooms,room,email, socket) {
+  return new Promise(res => {
+    if (Rooms[room]) {
+      MongoClient.connect(url, function (err, client) {
+        // console.log(client)
+        const db = client.db(dbName)
+        const usersCol = db.collection('users')
+        usersCol.updateOne({ email }, { $set: { location: room } }, async () => {
+          // console.log(err, result)
+          client.close()
+          let dir = moveRoom(room, email, Lions, Rooms, socket)
+          let from = dir[0]
+          let to = dir[1]
+          console.log(Rooms, from, to)
+          if (Rooms[from].size) io.to(from).emit('room', await getRoomData(from), fetchEmailLocation(from))
+          if (Rooms[to].size) io.to(to).emit('room', await getRoomData(to), fetchEmailLocation(to))
+          res()
+        })
+      })
+    }
+  })
+}
+
+function handleChat(email) {
+  return message => {
+    let room = Lions[email].room
+    io.to(room).emit('chat', email, message)
+  }
+}
+
+function handleMove(email, socket) {
+  return async location => {
+    console.log("Moving", email, location, socket)
+    let x = moveCheck(email, location, socket);
+    io.to(x.room).emit('room', await getRoomData(x.room), fetchEmailLocation(x.room))
+  }
+}
+
+function handleRoom(email, socket) {
+  return async () => {
+    let room = Lions?.[email]?.room
+    invalidRoomMsg (room, socket)
+    socket.emit('room', await getRoomData(room), fetchEmailLocation(room))
+  }
+}
+
+async function onConnection(socket, debug) {   
+  let email;           
+  if (!debug) email = await handleNewSocket(socket)
 
   socket.on('changeRoom', room => {
+    /* istanbul ignore next */ 
     changeRoomCallback(Rooms, room,email, socket)
   })
-// -------------------------------------------> my responsibility below this line
 
-// keep this the same... such a short function anyway
-  socket.on('chat', message => {
-    let room = Lions[email].room
-    console.log(room, email, message)
-    io.to(room).emit('chat', email, message)
-  })
+  socket.on('chat', handleChat(email))
 
-  socket.on('move', async location => {
-    console.log("Moving", email, location, socket)
-    /*
-    if (typeof location !== "object") {
-      socket.emit('error', "Invalid location")
-      return
-    }
-    location = location.map(i => parseInt(i))
-    if (!validLocation(location)) {
-      socket.emit('error', "Invalid location")
-      return
-    }
-    else if (!Lions[email]) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
-    Lions[email].location = location
-    let room = Lions?.[email]?.room
-    invalidRoomMsg (room, socket)
-    console.log(email, room)
-    */
-   let x = moveCheck(email, location, socket);
+  socket.on('move', handleMove(email, socket))
 
-   // if return is please reconnect or invalid location
-   /*
-   if (typeof x === 'string') {
-     console.log('socket error warning: ', x);
-     socket.emit('error', x);
-     return;
-   }
-   */
-
-    io.to(x.room).emit('room', await getRoomData(x.room), [...Rooms[x.room]].map(email => {
-      let { location } = Lions[email]
-      return { email, location }
-    }))
-  })
-
-/*
-  function roomCheck(email, socket) {
-    let room = Lions?.[email]?.room
-    if (!room) {
-      socket.emit('error', "Please reconnect")
-      return
-    }
-    
-    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
-      let { location } = Lions[email]
-      return { email, location }
-    }))
-    
-  }
-*/
-
-  socket.on('room', async () => {
-    // return roomCheck(email, socket);
-    
-    let room = Lions?.[email]?.room
-    invalidRoomMsg (room, socket)
-    socket.emit('room', await getRoomData(room), [...Rooms[room]].map(email => {
-      let { location } = Lions[email]
-      return { email, location }
-    }))
-  })
-
+  socket.on('room', handleRoom(email, socket))
 
   socket.on('disconnect', () => {
+    /* istanbul ignore next */ 
     checkDisconnect(socket, email);
   })
-  // io.send('hi')
-})
+}
+
+io.on('connection', onConnection)
 
 function checkDisconnect(socket, email) {
   console.log(`${email} disconnected`)
@@ -456,7 +400,7 @@ function moveCheck(email, location, socket) {
   return {room: room, email: email, location: location}
 }
 
-module.exports = {server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck,
+module.exports = {checkMongo, insertRooms, initializeRooms, server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck,
 validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
-changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback};
+changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback, onConnection, handleChat, handleMove, handleRoom, handleNewSocket};
 // module.exports = server;

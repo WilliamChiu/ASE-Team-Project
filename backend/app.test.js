@@ -1,19 +1,30 @@
 // more on how to write tests here: https://www.albertgao.xyz/2017/05/24/how-to-test-expressjs-with-jest-and-supertest/
 
-const request = require("supertest");
-const express = require('express')
-const session = require('express-session')
-const { Socket } = require('socket.io');
-
-const {app} = require('./app')
-
 const WebSocket = require('ws')
-let {Rooms} = require('./app')
-let {Lions} = require('./app')
-const {server} = require('./app');
+const {Rooms, Lions, server} = require('./app')
 
 
 describe("Backend Tests", () => {
+
+  test("checkMongo", async done => {
+    const { checkMongo } = require('./app.js')
+    let response = await checkMongo()
+    expect(response).toBe(true)
+    done()
+  })
+
+  test("insertRooms", async done => {
+    const { insertRooms } = require('./app.js')
+    await insertRooms()
+    done()
+  })
+
+  test("initializeRooms", async done => {
+    const { initializeRooms } = require('./app.js')
+    await initializeRooms()
+    done()
+  })
+
   test("movecheck branch 1", async done => {
     const { moveCheck } = require('./app.js')
     const io = require('socket.io')(server, {
@@ -234,16 +245,7 @@ describe("Backend Tests", () => {
     Rooms.butler.add('hello');
     delete Lions[chris_lion]
     console.log('ROOMS:', Rooms);
-    /*
-    butler = {'fakeemail': true, 'fake2': true, 'ctc2141@columbia.edu': true, delete: console.log};
-    mudd = {'ctc2141@columbia.edu': true};
-    Rooms.butler = butler;
-    Rooms.mudd = mudd;
-    console.log('ROOMS: ', Rooms)
 
-    chris_lion = {room: 'butler'};
-    Lions[chris_lion] = chris_lion;
-    */
     const ws = new WebSocket(`ws://localhost:5000`);
 
     const { checkDisconnect } = require('./app.js')
@@ -403,9 +405,7 @@ describe("Test valid location on the grid", () =>{
   });
 });
 
-const {Lions} = require('./app')
-const {Rooms} = require('./app')
-describe("Test valid loged in", () =>{
+describe("Test valid logged in", () =>{
 
   test("check valid socket connection", async () => {
     Lions["pdp2122@columbia.edu"] = {
@@ -460,6 +460,76 @@ describe("Test valid loged in", () =>{
 
 //   });
 // });
+
+describe("Test io init", () =>{
+  test("check if io is initialized", async done => {
+    const { onConnection } = require('./app.js')
+    let events = []
+    const fakeSocket = {
+      on: event => {
+        events.push(event)
+      },
+      request: { user: {_json: {email: "yeet"}}}
+    }
+
+    onConnection(fakeSocket, true)
+    expect(events).toStrictEqual([ 'changeRoom', 'chat', 'move', 'room', 'disconnect' ])
+    done()
+  });
+});
+
+describe("Test handleNewSocket", () =>{
+  test("check handleNewSocket", async done => {
+    const MongoClient = require('mongodb').MongoClient 
+    const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
+    const dbName = 'roaree'
+    await new Promise(res => MongoClient.connect(url, async function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      await usersCol.deleteMany({email: "tester2@columbia.edu"})
+      await usersCol.insertOne({email: "tester2@columbia.edu", location: "Butler"})
+      res()
+    }))
+
+    let fakeSocket = {
+      request: {user: {_json: {email: "tester2@columbia.edu"}}},
+      emit: () => {},
+      join: () => {},
+      leave: () => {}
+    }
+    const { handleNewSocket } = require('./app.js')
+    await handleNewSocket(fakeSocket)
+    done()
+  });
+});
+
+describe("Test io handlers", () =>{
+  Lions["testemail"] = {
+    socket: {
+      id: '8XzPSRzYigbJsLh9AAAD',
+      connected: true,
+      disconnected: false
+    },
+    room: 'Fayerweather',
+    location: [ 84, 50 ]
+  }
+
+  test("check handleRoom", async done => {
+    const { handleRoom } = require('./app.js')
+    await handleRoom("testemail", {emit: () => {}})()
+    done()
+  }); 
+  test("check handleChat", async done => {
+    const { handleChat } = require('./app.js')
+    await handleChat("testemail", {emit: () => {}})()
+    done()
+  });
+  test("check handleMove", async done => {
+    const { handleMove } = require('./app.js')
+    await handleMove("testemail", {emit: () => {}})([50, 50])
+    done()
+  });
+});
 
 describe("Test join room", () =>{
   test("check if a room is joined", async done => {
@@ -580,6 +650,24 @@ describe("Test change room callback", () =>{
     Rooms["Avery"] = new Set()
     Rooms["Fayerweather"] = new Set()
     Rooms["Avery"].add("pdp2122@columbia.edu")
+    Lions["yeet"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Avery',
+      location: [ 84, 50 ]
+    }
+    Lions["yeet2"] = {
+      socket: {
+        id: '8XzPSRzYigbJsLh9AAAD',
+        connected: true,
+        disconnected: false
+      },
+      room: 'Fayerweather',
+      location: [ 84, 50 ]
+    }
     Lions["pdp2122@columbia.edu"] = {
       socket: {
         id: '8XzPSRzYigbJsLh9AAAD',
@@ -598,10 +686,9 @@ describe("Test change room callback", () =>{
     })
 
     io.on('connection', async socket => {
-      Rooms["Avery"] = new Set()
-      Rooms["Fayerweather"] = new Set()
-      Rooms["Avery"].add("pdp2122@columbia.edu")
-      changeRoomCallback(Rooms, "Avery", "pdp2122@columbia.edu", socket)
+      Rooms["Avery"] = new Set(["yeet"])
+      Rooms["Fayerweather"] = new Set(["yeet2", "pdp2122@columbia.edu"])
+      await changeRoomCallback(Rooms, "Avery", "pdp2122@columbia.edu", socket)
       done()
     });
     io.listen(9000)
@@ -644,8 +731,42 @@ describe("Test passport", () => {
       return {user, info}
     }
 
-    temp = passport_callback('','', profile_mock, done)
-    expect(temp).toBeDefined()
+    passport_callback('','', profile_mock, done)
+  });
+
+  test("check new valid email credentials", async finished =>{
+    const {passport_callback} = require('./app')
+    const MongoClient = require('mongodb').MongoClient 
+    const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017`
+    const dbName = 'roaree'
+    await new Promise(res => MongoClient.connect(url, async function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      await usersCol.deleteMany({email: "tester@columbia.edu"})
+      res()
+    }))
+    const profile_mock = {
+      _json: {
+        sub: '104656250682509765796',
+        name: 'Phu D Pham',
+        given_name: 'Phu D',
+        family_name: 'Pham',
+        picture: 'https://lh5.googleusercontent.com/-cTHKIhRtZIU/AAAAAAAAAAI/AAAAAAAAAAA/AMZuucmtv-BRmjCPWUjFw8zHrC8QFSHNtw/s96-c/photo.jpg',
+        email: 'tester@columbia.edu',
+        email_verified: true,
+        locale: 'en',
+        hd: 'columbia.edu'
+      }
+    }
+
+    function done(err, user, info) {
+      console.log(err, user, info)
+      if (err) { return self.error(err); }
+      if (!user) { return self.fail(info); }
+      finished()
+    }
+
+    passport_callback('','', profile_mock, done)
   });
 
   test("check invalid email credentials (not columbia)", async () =>{
@@ -670,8 +791,7 @@ describe("Test passport", () => {
       return {user, info}
     }
 
-    temp = passport_callback('','', profile_mock, done)
-    expect(temp).toBeUndefined()
+    passport_callback('','', profile_mock, done)
   });
 
   test("check invalid email credentials (empty)", async () =>{
@@ -696,8 +816,7 @@ describe("Test passport", () => {
       return {user, info}
     }
 
-    temp = passport_callback('','', profile_mock, done)
-    expect(temp).toBeUndefined()
+    passport_callback('','', profile_mock, done)
   });
 
   test("check already logged in", async () =>{
@@ -734,8 +853,7 @@ describe("Test passport", () => {
       return {user, info}
     }
 
-    temp = passport_callback('','', profile_mock, done)
-    expect(temp).toBeUndefined()
+    passport_callback('','', profile_mock, done)
   });
 
   test("check log in exception", async () =>{
@@ -764,7 +882,6 @@ describe("Test passport", () => {
       return {user, info}
     }
 
-    temp = passport_callback('','', profile_mock, done)
-    expect(temp).toBeUndefined()
+    passport_callback('','', profile_mock, done)
   });
 });
