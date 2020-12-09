@@ -2,7 +2,7 @@
 MAX_TRIES=5
 
 function ready() {
-  docker-compose logs wcj-backend | grep "Initializing in-memory rooms.."
+  docker-compose logs backend | grep "Initializing in-memory rooms.."
 }
 
 # https://www.marksayson.com/blog/wait-until-docker-containers-initialized/
