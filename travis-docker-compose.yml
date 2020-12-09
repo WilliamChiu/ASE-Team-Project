@@ -24,7 +24,7 @@ services:
       - /usr/src/app/node_modules
     links:
       - mongo
-    env:
+    environment:
       - GOOGLE_CLIENT_ID=googleid
       - GOOGLE_CLIENT_SECRET=googlesecret
       - MONGO_USER=user
