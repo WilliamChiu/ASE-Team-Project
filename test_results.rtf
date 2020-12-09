@@ -1,0 +1,128 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2513
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Bold;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red255\green255\blue255;\red20\green153\blue2;\red0\green0\blue0;
+\red116\green116\blue116;\red57\green192\blue38;\red170\green171\blue37;}
+{\*\expandedcolortbl;;\csgray\c100000;\cssrgb\c0\c65000\c0;\csgray\c0;
+\csgenericrgb\c45371\c45369\c45370;\cssrgb\c25704\c77963\c19556;\cssrgb\c72330\c71683\c18597;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\b\fs22 \cf2 \cb3 \CocoaLigature0  PASS 
+\f1\b0 \cf4 \cb1  \cf5 ./
+\f0\b \cf4 app.test.js
+\f1\b0 \
+  Backend Tests\
+    \cf6 \uc0\u10003 \cf4  \cf5 checkMongo (1055 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 insertRooms (53 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 initializeRooms (16 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 1 (146 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 2 (36 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 3 (16 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 4 (16 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 5 (16 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 6 (24 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 7 (23 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 8 (24 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 movecheck branch 9 (28 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Check checkdisconnect branch 1 (11 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Check checkdisconnect branch2 (5 ms)\cf4 \
+  Test the web sockets\
+    \cf6 \uc0\u10003 \cf4  \cf5 Check socket connection (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Web socket on changeRoom\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Web socket on chat (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Web socket on move\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Check socket on room (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 Check socket on disconnect (1 ms)\cf4 \
+  Test valid location on the grid\
+    \cf6 \uc0\u10003 \cf4  \cf5 check valid move (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check valid move\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid out of bound move (negative) (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid out of bound move (over 100)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid location input\cf4 \
+  Test valid logged in\
+    \cf6 \uc0\u10003 \cf4  \cf5 check valid socket connection\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid socket connection (1 ms)\cf4 \
+  Test io init\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if io is initialized (3 ms)\cf4 \
+  Test handleNewSocket\
+    \cf6 \uc0\u10003 \cf4  \cf5 check handleNewSocket (84 ms)\cf4 \
+  Test io handlers\
+    \cf6 \uc0\u10003 \cf4  \cf5 check handleRoom (11 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check handleChat\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check handleMove (14 ms)\cf4 \
+  Test join room\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if a room is joined (17 ms)\cf4 \
+  Test change room\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if a move from room to room happens (17 ms)\cf4 \
+  Test invalid room message\
+    \cf6 \uc0\u10003 \cf4  \cf5 check socket notice an invalid room (13 ms)\cf4 \
+  Test initialization of database\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if the database has been initialized\cf4 \
+  Test change room callback\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if a move from room to room callback happens (53 ms)\cf4 \
+  Test initialization of mongodb\
+    \cf6 \uc0\u10003 \cf4  \cf5 check if the mongoDb database has been initialized (1 ms)\cf4 \
+  Test passport\
+    \cf6 \uc0\u10003 \cf4  \cf5 check valid email credentials (2 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check new valid email credentials (34 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid email credentials (not columbia) (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check invalid email credentials (empty)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check already logged in (1 ms)\cf4 \
+    \cf6 \uc0\u10003 \cf4  \cf5 check log in exception\cf4 \
+----------|---------|----------|---------|---------|-------------------\
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s \
+----------|---------|----------|---------|---------|-------------------\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\b \cf6 All files
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf6    94.87
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf7                  
+\f1\b0 \cf4  \
+
+\f0\b \cf6  app.js  
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf6    94.87
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf6     100
+\f1\b0 \cf4  | 
+\f0\b \cf7 291,374          
+\f1\b0 \cf4  \
+----------|---------|----------|---------|---------|-------------------\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\b Test Suites: \cf6 2 passed
+\f1\b0 \cf4 , 2 total\
+
+\f0\b Tests:       \cf6 44 passed
+\f1\b0 \cf4 , 44 total\
+
+\f0\b Snapshots:   
+\f1\b0 0 total\
+
+\f0\b Time:
+\f1\b0         
+\f0\b \cf7 6.236 s
+\f1\b0 \cf4 \
+\cf5 Ran all test suites.\cf4 \
+\
+
+\f0\b Watch Usage
+\f1\b0 \
+\cf5  \'9b Press \cf4 f\cf5  to run only failed tests.\cf4 \
+\cf5  \'9b Press \cf4 o\cf5  to only run tests related to changed files.\cf4 \
+\cf5  \'9b Press\cf4  p \cf5 to filter by a filename regex pattern.\cf4 \
+\cf5  \'9b Press\cf4  t \cf5 to filter by a test name regex pattern.\cf4 \
+\cf5  \'9b Press\cf4  q \cf5 to quit watch mode.\cf4 \
+\cf5  \'9b Press \cf4 Enter\cf5  to trigger a test run.}
