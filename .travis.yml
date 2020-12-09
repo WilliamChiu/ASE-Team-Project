@@ -12,6 +12,7 @@ env:
     - MONGO_PASSWORD=password
 
 before_install:
+- sudo killall mongod
 - docker-compose -f travis-docker-compose.yml up --build
 
 script:
