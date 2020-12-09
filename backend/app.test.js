@@ -103,7 +103,7 @@ describe("Backend Tests", () => {
     })
 
     io.on('connection', async socket => {  
-      let response = moveCheck('x', [1111, 2], socket)
+      let response = moveCheck('x', [101, 2], socket)
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
@@ -148,7 +148,7 @@ describe("Backend Tests", () => {
     })
 
     io.on('connection', async socket => {  
-      let response = moveCheck('x', [1, 1111], socket)
+      let response = moveCheck('x', [1, 101], socket)
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
