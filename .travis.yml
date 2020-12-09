@@ -4,5 +4,8 @@ services:
 - docker
 - mongodb
 
+before_install:
+- docker-compose up --build
+
 script:
-- docker compose up --build
+- docker exec -it wcj-backend npm run test -- --coverage

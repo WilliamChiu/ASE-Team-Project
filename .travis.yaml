@@ -1,8 +1,0 @@
-language: node_js
-
-services:
-- docker
-- mongodb
-
-script:
-- docker compose up --build
