@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 MAX_TRIES=5
 
 function ready() {

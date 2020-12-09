@@ -41,6 +41,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6000)
 
@@ -62,6 +63,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6001)
 
@@ -83,6 +85,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6002)
 
@@ -104,6 +107,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6003)
 
@@ -125,6 +129,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6004)
 
@@ -147,6 +152,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6005)
 
@@ -169,6 +175,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6006)
 
@@ -191,6 +198,7 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response).toBe(undefined)
       done()
+      io.close();
     });
     io.listen(6007)
 
@@ -213,13 +221,14 @@ describe("Backend Tests", () => {
       // console.log('dir0: ', dir[0]);
       expect(response.room).toBe('butler')
       done()
+      io.close();
     });
     io.listen(6008)
 
     require('socket.io-client')('http://localhost:6008');
   });
 
-  test("Check checkdisconnect branch 1", async () => {
+  test("Check checkdisconnect branch 1", async done => {
 
     butler = {'fakeemail': true, 'fake2': true, 'ctc2141@columbia.edu': true, delete: console.log};
     mudd = {'ctc2141@columbia.edu': true};
@@ -230,14 +239,13 @@ describe("Backend Tests", () => {
     chris_lion = {room: 'butler'};
     Lions[chris_lion] = chris_lion;
 
-    const ws = new WebSocket(`ws://localhost:5000`);
-
     const { checkDisconnect } = require('./app.js')
-    let x = checkDisconnect(ws, chris_lion);
+    let x = checkDisconnect(chris_lion);
     expect(x).toBe(1);
+    done()
   });
 
-  test("Check checkdisconnect branch2", async () => {
+  test("Check checkdisconnect branch2", async done => {
     delete Rooms.butler;
     delete Rooms.mudd;
     // Rooms = [];
@@ -246,70 +254,69 @@ describe("Backend Tests", () => {
     delete Lions[chris_lion]
     console.log('ROOMS:', Rooms);
 
-    const ws = new WebSocket(`ws://localhost:5000`);
-
     const { checkDisconnect } = require('./app.js')
-    let x = checkDisconnect(ws, chris_lion);
+    let x = checkDisconnect(chris_lion);
     expect(x).toBe(0);
+    done()
   });
 });
 
 // -------------------------PHU'S TESTS BELOW-------------------------------------------
-describe("Test the web sockets", () => {
-  test("Check socket connection", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('connection', (msg) => {
-                expect(msg).toEqual('hello');
-                ws.close();
-            })
-            .on('close', () => done());
-  });
+// describe("Test the web sockets", () => {
+//   test("Check socket connection", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('connection', (msg) => {
+//                 expect(msg).toEqual('hello');
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
 
-  test("Web socket on changeRoom", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('changeRoom', (msg) => {
-                expect(JSON.parse(msg).id).toEqual(0);
-                ws.close();
-            })
-            .on('close', () => done());
-  });
+//   test("Web socket on changeRoom", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('changeRoom', (msg) => {
+//                 expect(JSON.parse(msg).id).toEqual(0);
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
 
-  test("Web socket on chat", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('chat', (msg) => {
-                expect(JSON.parse(msg).id).toEqual(0);
-                ws.close();
-            })
-            .on('close', () => done());
-  });
+//   test("Web socket on chat", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('chat', (msg) => {
+//                 expect(JSON.parse(msg).id).toEqual(0);
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
 
-  test("Web socket on move", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('move', (msg) => {
-                expect(JSON.parse(msg).id).toEqual(0);
-                ws.close();
-            })
-            .on('close', () => done());
-  });
+//   test("Web socket on move", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('move', (msg) => {
+//                 expect(JSON.parse(msg).id).toEqual(0);
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
 
-  test("Check socket on room", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('room', (msg) => {
-                expect(JSON.parse(msg).id).toEqual(0);
-                ws.close();
-            })
-            .on('close', () => done());
-  });
+//   test("Check socket on room", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('room', (msg) => {
+//                 expect(JSON.parse(msg).id).toEqual(0);
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
 
-  test("Check socket on disconnect", async () => {
-    const ws = new WebSocket(`ws://localhost:5000`)
-            .on('disconnect', (msg) => {
-                expect(JSON.parse(msg).id).toEqual(0);
-                ws.close();
-            })
-            .on('close', () => done());
-  });
-});
+//   test("Check socket on disconnect", async () => {
+//     const ws = new WebSocket(`ws://localhost:5000`)
+//             .on('disconnect', (msg) => {
+//                 expect(JSON.parse(msg).id).toEqual(0);
+//                 ws.close();
+//             })
+//             .on('close', () => done());
+//   });
+// });
 
 //import passport from 'app';
 const profile_mock = {
@@ -600,6 +607,7 @@ describe("Test change room", () =>{
       expect(dir[0]).toBe("Fayerweather")
       expect(dir[1]).toBe("Avery")
       done()
+      io.close();
     });
     io.listen(7050)
 
@@ -626,6 +634,7 @@ describe("Test invalid room message", () =>{
       invalidRoomMsg(null, socket)
       
       done()
+      io.close();
     });
     io.listen(8000)
 
@@ -691,6 +700,7 @@ describe("Test change room callback", () =>{
       Rooms["Fayerweather"] = new Set(["yeet2", "pdp2122@columbia.edu"])
       await changeRoomCallback(Rooms, "Avery", "pdp2122@columbia.edu", socket)
       done()
+      io.close();
     });
     io.listen(9000)
 
@@ -700,7 +710,7 @@ describe("Test change room callback", () =>{
 
 describe("Test initialization of mongodb", () => {
   test("check if the mongoDb database has been initialized", async () =>{
-    MongoClient.connect(url, async(err, client) => {})
+    MongoClient.connect(url, async(err, client) => client.close())
   });
 });
 

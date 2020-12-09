@@ -357,7 +357,7 @@ async function onConnection(socket, debug) {
 
 io.on('connection', onConnection)
 
-function checkDisconnect(socket, email) {
+function checkDisconnect(email) {
   console.log(`${email} disconnected`)
   console.log('DISCONNECT BEFORE', Rooms)
   console.log('Lions: ', Lions)
