@@ -2,8 +2,8 @@
 MAX_TRIES=5
 
 function ready() {
-  docker-compose logs -f travis-docker-compose.yml backend
-  docker-compose logs -f travis-docker-compose.yml backend | grep "Initializing in-memory rooms.."
+  docker-compose  -f travis-docker-compose.yml logs  backend
+  docker-compose  -f travis-docker-compose.yml logs  backend | grep "Initializing in-memory rooms.."
 }
 
 # https://www.marksayson.com/blog/wait-until-docker-containers-initialized/
