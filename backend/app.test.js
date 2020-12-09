@@ -488,6 +488,7 @@ describe("Test handleNewSocket", () =>{
       const usersCol = db.collection('users')
       await usersCol.deleteMany({email: "tester2@columbia.edu"})
       await usersCol.insertOne({email: "tester2@columbia.edu", location: "Butler"})
+      await client.close()
       res()
     }))
 
@@ -743,6 +744,7 @@ describe("Test passport", () => {
       const db = client.db(dbName)
       const usersCol = db.collection('users')
       await usersCol.deleteMany({email: "tester@columbia.edu"})
+      await client.close()
       res()
     }))
     const profile_mock = {

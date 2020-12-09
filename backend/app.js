@@ -60,6 +60,7 @@ function insertRooms() {
 function initializeRooms() {
   return new Promise(res => {
     MongoClient.connect(url, async (err, client) => {
+      /* istanbul ignore next */
       if (err) return console.log(err);
       const db = client.db(dbName)
       const roomsCol = db.collection('rooms')
@@ -99,12 +100,12 @@ function loggedIn(email) {
   return Lions?.[email]?.socket.connected ? true : false
 }
 
-passport.serializeUser(function (user, cb) {
+passport.serializeUser(/* istanbul ignore next */ function (user, cb) {
   /* istanbul ignore next */ 
   cb(null, user)
 })
 
-passport.deserializeUser(function (obj, cb) {
+passport.deserializeUser(/* istanbul ignore next */ function (obj, cb) {
   /* istanbul ignore next */ 
   cb(null, obj)
 })
@@ -140,6 +141,7 @@ function passport_callback (accessToken, refreshToken, profile, done){
       usersCol.findOne({ email }, (err, result) => {
         if (!result) {
           usersCol.insertOne({ email, location: "Butler" }, err => {
+            /* istanbul ignore next */
             if (err) console.log(err)
             done(null, profile)
           })
@@ -171,30 +173,30 @@ app.get('/auth/google',
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/error' }),
+  /* istanbul ignore next */
   function (req, res) {
     // Successful authentication, redirect success.
     /* istanbul ignore next */
     res.redirect('http://localhost:3000')
   })
 
-app.get('/success', (req, res) => {
-  /* istanbul ignore next */
+app.get('/success', /* istanbul ignore next */ (req, res) => {
   res.send(req.user)
 })
-app.get('/error', (req, res) => res.send("error logging in"))
+app.get('/error', /* istanbul ignore next */ (req, res) => res.send("error logging in"))
 
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages
 
 
 // https://socket.io/docs/v3/namespaces/index.html
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next)
+const wrap = middleware => /* istanbul ignore next */ (socket, next) => middleware(socket.request, {}, next)
 
 io.use(wrap(sessionMiddleware))
 io.use(wrap(passport.initialize()))
 io.use(wrap(passport.session()))
 
-io.use((socket, next) => {
+io.use(/* istanbul ignore next */ (socket, next) => {
   // console.log("Socket user found: ", socket.request.user)
   /* istanbul ignore next */
   if (socket.request.user) {
@@ -260,6 +262,7 @@ function invalidRoomMsg (room, socket){
 
 async function handleNewSocket(socket) {
   let email = socket.request.user?._json?.email
+  /* istanbul ignore next */
   if (loggedIn(email)) socket.disconnect(true)
   await new Promise(res => MongoClient.connect(url, function (err, client) {
     const db = client.db(dbName)
@@ -284,6 +287,7 @@ function fetchEmailLocation(room) {
 
 function changeRoomCallback(Rooms,room,email, socket) {
   return new Promise(res => {
+    /* istanbul ignore if */
     if (Rooms[room]) {
       MongoClient.connect(url, function (err, client) {
         // console.log(client)
@@ -296,7 +300,9 @@ function changeRoomCallback(Rooms,room,email, socket) {
           let from = dir[0]
           let to = dir[1]
           console.log(Rooms, from, to)
+          /* istanbul ignore if */
           if (Rooms[from].size) io.to(from).emit('room', await getRoomData(from), fetchEmailLocation(from))
+          /* istanbul ignore if */
           if (Rooms[to].size) io.to(to).emit('room', await getRoomData(to), fetchEmailLocation(to))
           res()
         })
@@ -329,10 +335,11 @@ function handleRoom(email, socket) {
 }
 
 async function onConnection(socket, debug) {   
-  let email;           
+  let email;
+  /* istanbul ignore next */
   if (!debug) email = await handleNewSocket(socket)
 
-  socket.on('changeRoom', room => {
+  socket.on('changeRoom', /* istanbul ignore next */ room => {
     /* istanbul ignore next */ 
     changeRoomCallback(Rooms, room,email, socket)
   })
@@ -343,8 +350,7 @@ async function onConnection(socket, debug) {
 
   socket.on('room', handleRoom(email, socket))
 
-  socket.on('disconnect', () => {
-    /* istanbul ignore next */ 
+  socket.on('disconnect', /* istanbul ignore next */ () => {
     checkDisconnect(socket, email);
   })
 }
@@ -364,6 +370,7 @@ function checkDisconnect(socket, email) {
   }
   else {
     for (let room in Rooms) {
+      /* istanbul ignore if */
       if (Rooms[room]) {
        delete room.email;
       }
