@@ -3,6 +3,7 @@ const session = require('express-session')
 const app = express()
 const server = require('http').createServer(app)
 const bodyParser = require('body-parser')
+const nodemailer = require('nodemailer')
 const io = require('socket.io')(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -114,20 +115,20 @@ function passport_callback (accessToken, refreshToken, profile, done){
   let email = profile?._json?.email
   // console.log("HEREEEE HEREEEEEE!!!!")
   // console.log(email)
-  // if (EXCEPTIONS.includes(email)) {
-  //   MongoClient.connect(url, function (err, client) {
-  //     const db = client.db(dbName)
-  //     const usersCol = db.collection('users')
-  //     usersCol.findOne({ email }, (err, result) => {
-  //       if (!result) {
-  //         usersCol.insertOne({ email, location: "Butler" }, err => {
-  //           if (err) console.log(err)
-  //         })
-  //       }
-  //     })
-  //   })
-  //   return done(null, profile)
-  // }
+  if (EXCEPTIONS.includes(email)) {
+    MongoClient.connect(url, function (err, client) {
+      const db = client.db(dbName)
+      const usersCol = db.collection('users')
+      usersCol.findOne({ email }, (err, result) => {
+        if (!result) {
+          usersCol.insertOne({ email, location: "Butler" }, err => {
+            if (err) console.log(err)
+          })
+        }
+      })
+    })
+    return done(null, profile)
+  }
   if (!email)
     done(null, false, { message: "Not a Columbia/Barnard email" })
   else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
@@ -184,6 +185,24 @@ app.get('/success', /* istanbul ignore next */ (req, res) => {
   res.send(req.user)
 })
 app.get('/error', /* istanbul ignore next */ (req, res) => res.send("error logging in"))
+
+app.post('/invite', /* istanbul ignore next */ async (req, res) => {
+  let testAccount = await nodemailer.createTestAccount();
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.gmailuser,
+        pass: process.env.gmailpass
+    }
+  })
+  await transporter.sendMail({
+    from: '"Club Roaree" <williamchiu16@gmail.com>', // sender address
+    to: req.body.invitee, // list of receivers
+    subject: "You've been invited to Club Roaree!", // Subject line
+    text: "Come on over and spend some time on campus: http://localhost:3000", // plain text body
+    html: "<b>Come on over and spend some time on campus: <a href='http://localhost:3000'>Join here!</a></b>", // html body
+  })
+})
 
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages

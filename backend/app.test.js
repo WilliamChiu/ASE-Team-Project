@@ -137,7 +137,7 @@ describe("Backend Tests", () => {
   });
 
   test("movecheck branch 6", async done => {
-    console.log('Lions: ', Lions);
+    //console.log('Lions: ', Lions);
     const { moveCheck } = require('./app.js')
     const io = require('socket.io')(server, {
       cors: {
@@ -234,7 +234,7 @@ describe("Backend Tests", () => {
     mudd = {'ctc2141@columbia.edu': true};
     Rooms.butler = butler;
     Rooms.mudd = mudd;
-    console.log('ROOMS: ', Rooms)
+    //console.log('ROOMS: ', Rooms)
 
     chris_lion = {room: 'butler'};
     Lions[chris_lion] = chris_lion;
@@ -252,7 +252,7 @@ describe("Backend Tests", () => {
     Rooms.butler = new Set();
     Rooms.butler.add('hello');
     delete Lions[chris_lion]
-    console.log('ROOMS:', Rooms);
+    //console.log('ROOMS:', Rooms);
 
     const { checkDisconnect } = require('./app.js')
     let x = checkDisconnect(chris_lion);
@@ -569,6 +569,7 @@ describe("Test join room", () =>{
       //expect("test").toBe("not test")
       expect(from).toBe("Avery")
       done()
+      io.close()
     });
 
     io.listen(6050)
@@ -772,7 +773,7 @@ describe("Test passport", () => {
     }
 
     function done(err, user, info) {
-      console.log(err, user, info)
+      //console.log(err, user, info)
       if (err) { return self.error(err); }
       if (!user) { return self.fail(info); }
       finished()

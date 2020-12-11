@@ -11,6 +11,23 @@ function getLocation(participants, email) {
     return participants.find(p => p.email === email).location
 }
 
+const inviteFriend = () => {
+    let person = prompt("Please enter a user to invite")
+    fetch("http://localhost:5000/invite", {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        mode: 'cors', // no-cors, *cors, same-origin
+        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'include', // include, *same-origin, omit
+        headers: {
+          'Content-Type': 'application/json'
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body: JSON.stringify({invitee: person}) // body data type must match "Content-Type" header
+      })
+}
+
 function Landing(props) {
     let email = props._json.email
     const [room, setRoom] = useState({})
@@ -139,6 +156,7 @@ function Landing(props) {
 
     return (
         <div className="Landing" id="room">
+            <div onClick={inviteFriend}>Invite a friend!</div>
             {
                 room?.exits?.map(exit =>
                     <div className="exitLabel" onClick={() => changeRoom(exit.room)} style={{ top: `${exit.coords[1]}vh`, left: `${exit.coords[0]}vw` }}>
