@@ -115,20 +115,20 @@ function passport_callback (accessToken, refreshToken, profile, done){
   let email = profile?._json?.email
   // console.log("HEREEEE HEREEEEEE!!!!")
   // console.log(email)
-  if (EXCEPTIONS.includes(email)) {
-    MongoClient.connect(url, function (err, client) {
-      const db = client.db(dbName)
-      const usersCol = db.collection('users')
-      usersCol.findOne({ email }, (err, result) => {
-        if (!result) {
-          usersCol.insertOne({ email, location: "Butler" }, err => {
-            if (err) console.log(err)
-          })
-        }
-      })
-    })
-    return done(null, profile)
-  }
+  // if (EXCEPTIONS.includes(email)) {
+  //   MongoClient.connect(url, function (err, client) {
+  //     const db = client.db(dbName)
+  //     const usersCol = db.collection('users')
+  //     usersCol.findOne({ email }, (err, result) => {
+  //       if (!result) {
+  //         usersCol.insertOne({ email, location: "Butler" }, err => {
+  //           if (err) console.log(err)
+  //         })
+  //       }
+  //     })
+  //   })
+  //   return done(null, profile)
+  // }
   if (!email)
     done(null, false, { message: "Not a Columbia/Barnard email" })
   else if (profile?._json?.hd !== "columbia.edu" && profile?._json?.hd !== "barnard.edu")
@@ -186,8 +186,8 @@ app.get('/success', /* istanbul ignore next */ (req, res) => {
 })
 app.get('/error', /* istanbul ignore next */ (req, res) => res.send("error logging in"))
 
-app.post('/invite', /* istanbul ignore next */ async (req, res) => {
-  let testAccount = await nodemailer.createTestAccount();
+async function handleInvite(req, res) {
+  await nodemailer.createTestAccount();
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -202,7 +202,10 @@ app.post('/invite', /* istanbul ignore next */ async (req, res) => {
     text: "Come on over and spend some time on campus: http://localhost:3000", // plain text body
     html: "<b>Come on over and spend some time on campus: <a href='http://localhost:3000'>Join here!</a></b>", // html body
   })
-})
+  res.send("Email sent")
+}
+
+app.post('/invite', /* istanbul ignore next */ handleInvite)
 
 // TODO
 // Figure out how to create a websocket route for clients to connect to and receive messages
@@ -426,7 +429,7 @@ function moveCheck(email, location, socket) {
   return {room: room, email: email, location: location}
 }
 
-module.exports = {checkMongo, insertRooms, initializeRooms, server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck,
+module.exports = {checkMongo, handleInvite, insertRooms, initializeRooms, server:server, app:app, checkDisconnect:checkDisconnect, Lions:Lions, Rooms:Rooms, io:io, moveCheck:moveCheck,
 validLocation: validLocation, joinRoom:joinRoom, moveRoom:moveRoom, loggedIn: loggedIn, invalidRoomMsg: invalidRoomMsg, 
 changeRoomCallback: changeRoomCallback, initRooms:initRooms, passport_callback: passport_callback, onConnection, handleChat, handleMove, handleRoom, handleNewSocket};
 // module.exports = server;

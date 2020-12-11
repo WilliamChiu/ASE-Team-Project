@@ -746,6 +746,12 @@ describe("Test passport", () => {
     passport_callback('','', profile_mock, done)
   });
 
+  test("check email sending", async finished =>{
+    const {handleInvite} = require('./app')
+    handleInvite({body: {invitee: "wnc2105@columbia.edu"}}, {send: () => {}})
+    finished()
+  });
+
   test("check new valid email credentials", async finished =>{
     const {passport_callback} = require('./app')
     const MongoClient = require('mongodb').MongoClient 
